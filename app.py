@@ -45,8 +45,13 @@ MYSQL_CONFIG = {
 app = Flask(__name__, static_folder='.', static_url_path='')
 app.secret_key = os.environ.get('SECRET_KEY', 'nexaai-dev-secret-2024')
 CORS(app, supports_credentials=True, origins='*')
-app.config['SESSION_COOKIE_SAMESITE'] = 'None'
-app.config['SESSION_COOKIE_SECURE'] = os.environ.get('RAILWAY_ENVIRONMENT') is not None
+
+# On Railway (HTTPS) cookies need Secure+SameSite=None
+# Locally (HTTP) use Lax so sessions still work
+_on_railway = bool(os.environ.get('RAILWAY_ENVIRONMENT') or os.environ.get('RAILWAY_SERVICE_ID'))
+app.config['SESSION_COOKIE_SAMESITE'] = 'None' if _on_railway else 'Lax'
+app.config['SESSION_COOKIE_SECURE']   = _on_railway
+app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['PROPAGATE_EXCEPTIONS'] = True
 
 UPLOAD_FOLDER = 'uploads'
@@ -973,19 +978,20 @@ def server_error(error):
 
 
 # ═══════════════════════════════════════════════════════════════════════
-# Main
+# Startup — runs for BOTH gunicorn and direct python app.py
+# ═══════════════════════════════════════════════════════════════════════
+
+print('\n' + '='*70)
+print(' NexaAI — AI-Driven Skill Gap Platform')
+print(' Initializing...')
+print('='*70)
+init_db()
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Main (direct run only — gunicorn uses the module directly)
 # ═══════════════════════════════════════════════════════════════════════
 
 if __name__ == '__main__':
-    print('\n' + '='*70)
-    print(' NexaAI — AI-Driven Skill Gap Platform')
-    print(' Starting Flask Server...')
-    print('='*70)
-    
-    # Initialize database
-    init_db()
-    
-    # Start server — use PORT env var for Railway, fallback to 5000 locally
     port = int(os.environ.get('PORT', 5000))
-    is_production = os.environ.get('RAILWAY_ENVIRONMENT') is not None
-    app.run(debug=not is_production, host='0.0.0.0', port=port, use_reloader=False)
+    app.run(debug=not _on_railway, host='0.0.0.0', port=port, use_reloader=False)
