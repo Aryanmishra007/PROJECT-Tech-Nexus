@@ -69,7 +69,8 @@ function showScreen(screenId) {
     'screen-learning':   'Learning Path',
     'screen-interview':  'Mock Interview',
     'screen-ats':        'ATS Suggestions',
-    'screen-admin':      'Admin Analytics'
+    'screen-admin':      'Admin Analytics',
+    'screen-profile':    'My Profile'
   };
   const titleEl = document.getElementById('header-title');
   if (titleEl) titleEl.textContent = titleMap[screenId] || 'NexaAI';
@@ -165,26 +166,23 @@ async function handleRegister() {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   AUTH — LOGIN MODE SWITCHING
+   AUTH — TAB SWITCHING
    ══════════════════════════════════════════════════════════════ */
 
-function switchLoginMode(mode) {
-  const studentForm = document.getElementById('student-login-form');
-  const adminForm = document.getElementById('admin-login-form');
-  const studentBtn = document.getElementById('student-mode-btn');
-  const adminBtn = document.getElementById('admin-mode-btn');
+function switchAuthTab(tab) {
+  // Hide all panels
+  ['login', 'signup', 'admin'].forEach(t => {
+    const panel = document.getElementById('auth-tab-' + t);
+    const btn   = document.getElementById('tab-' + t);
+    if (panel) panel.classList.add('hidden');
+    if (btn)   btn.classList.remove('active');
+  });
 
-  if (mode === 'student') {
-    studentForm.classList.remove('hidden');
-    adminForm.classList.add('hidden');
-    studentBtn.classList.add('active');
-    adminBtn.classList.remove('active');
-  } else {
-    studentForm.classList.add('hidden');
-    adminForm.classList.remove('hidden');
-    studentBtn.classList.remove('active');
-    adminBtn.classList.add('active');
-  }
+  // Show selected panel
+  const activePanel = document.getElementById('auth-tab-' + tab);
+  const activeBtn   = document.getElementById('tab-' + tab);
+  if (activePanel) activePanel.classList.remove('hidden');
+  if (activeBtn)   activeBtn.classList.add('active');
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -292,7 +290,8 @@ async function logout() {
   interviewQuestions = [];
   diagnosticQuestions = [];
   showToast('You have been logged out', 'info');
-  showPage('login-page');
+  showPage('auth-page');
+  switchAuthTab('login');
 }
 
 /* ── Check Auth on Load ─────────────────────────────────────── */
@@ -307,10 +306,12 @@ async function checkAuth() {
       loadDashboard();
       showScreen('screen-dashboard');
     } else {
-      showPage('login-page');
+      showPage('auth-page');
+      switchAuthTab('login');
     }
   } catch (_) {
-    showPage('login-page');
+    showPage('auth-page');
+    switchAuthTab('login');
   }
 }
 
@@ -1456,8 +1457,50 @@ function navToScreen(screenId) {
     case 'screen-admin':
       loadAdminAnalytics();
       break;
+    case 'screen-profile':
+      loadProfile();
+      break;
   }
   showScreen(screenId);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PROFILE
+   ══════════════════════════════════════════════════════════════ */
+
+async function loadProfile() {
+  if (!currentUser) return;
+
+  const name  = currentUser.name  || currentUser.email?.split('@')[0] || 'User';
+  const email = currentUser.email || '—';
+  const role  = currentUser.role  || 'student';
+
+  // Avatar initial
+  const avatarEl = document.getElementById('profile-avatar-lg');
+  if (avatarEl) avatarEl.textContent = name.charAt(0).toUpperCase();
+
+  // Info fields
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  set('profile-name',  name);
+  set('profile-email', email);
+  set('profile-role',  role === 'admin' ? 'Admin' : 'Student');
+
+  // Member since — derive from currentUser or fallback to today
+  const since = currentUser.created_at
+    ? new Date(currentUser.created_at).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })
+    : new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' });
+  set('profile-since', since);
+
+  // Pull live stats
+  try {
+    const res = await fetch('/api/user-stats', { credentials: 'include' });
+    if (res.ok) {
+      const data = await res.json();
+      set('profile-stat-resumes', data.resumes    ?? 0);
+      set('profile-stat-skills',  data.skills     ?? 0);
+      set('profile-stat-tests',   data.interviews ?? 0);
+    }
+  } catch (_) { /* leave at 0 */ }
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -1492,9 +1535,11 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('input[type="password"]').forEach(input => {
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
-        const form = input.closest('[id$="-page"]');
-        if (form?.id === 'login-page') handleLogin();
-        else if (form?.id === 'register-page') handleRegister();
+        // Determine active auth tab by the panel the input lives in
+        const panel = input.closest('.auth-tab-panel');
+        if (panel?.id === 'auth-tab-login')  handleLogin();
+        else if (panel?.id === 'auth-tab-signup') handleRegister();
+        else if (panel?.id === 'auth-tab-admin')  handleAdminLogin();
       }
     });
   });

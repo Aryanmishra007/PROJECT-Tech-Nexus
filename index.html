@@ -27,87 +27,32 @@
 <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
 
 <!-- ══════════════════════════════════════════════════════════
-     PAGE: REGISTER
+     PAGE: AUTH (Login / Sign Up / Admin — unified)
      ══════════════════════════════════════════════════════════ -->
-<div id="register-page" class="page auth-page">
+<div id="auth-page" class="page auth-page active">
   <div class="auth-card">
 
+    <!-- Logo -->
     <div class="auth-logo">
       <div class="auth-logo-icon"><i class="bi bi-cpu-fill"></i></div>
       <span class="auth-logo-text">NexaAI</span>
     </div>
 
-    <h2 class="auth-title">Create your account</h2>
-    <p class="auth-subtitle">Start bridging your skill gaps today</p>
-
-    <div class="form-group">
-      <label class="form-label" for="reg-name">Full Name</label>
-      <div class="input-icon-wrap">
-        <i class="bi bi-person"></i>
-        <input id="reg-name" type="text" class="form-input" placeholder="e.g. Aryan Mishra" autocomplete="name" />
-      </div>
-    </div>
-
-    <div class="form-group">
-      <label class="form-label" for="reg-email">Email Address</label>
-      <div class="input-icon-wrap">
-        <i class="bi bi-envelope"></i>
-        <input id="reg-email" type="email" class="form-input" placeholder="you@example.com" autocomplete="email" />
-      </div>
-    </div>
-
-    <div class="form-group">
-      <label class="form-label" for="reg-password">Password</label>
-      <div class="input-icon-wrap">
-        <i class="bi bi-lock"></i>
-        <input id="reg-password" type="password" class="form-input" placeholder="Min 6 characters" autocomplete="new-password" />
-      </div>
-    </div>
-
-    <div class="form-group">
-      <label class="form-label" for="reg-confirm">Confirm Password</label>
-      <div class="input-icon-wrap">
-        <i class="bi bi-shield-lock"></i>
-        <input id="reg-confirm" type="password" class="form-input" placeholder="Repeat password" autocomplete="new-password" />
-      </div>
-    </div>
-
-    <button id="register-btn" class="btn btn-primary btn-block btn-lg" onclick="handleRegister()">
-      <i class="bi bi-rocket-takeoff"></i> Create Account
-    </button>
-
-    <div class="auth-switch">
-      Already have an account?
-      <a href="#" onclick="showPage('login-page'); return false;">Sign in</a>
-    </div>
-
-  </div>
-</div><!-- /register-page -->
-
-
-<!-- ══════════════════════════════════════════════════════════
-     PAGE: LOGIN
-     ══════════════════════════════════════════════════════════ -->
-<div id="login-page" class="page auth-page active">
-  <div class="auth-card">
-
-    <div class="auth-logo">
-      <div class="auth-logo-icon"><i class="bi bi-cpu-fill"></i></div>
-      <span class="auth-logo-text">NexaAI</span>
-    </div>
-
-    <!-- Login Mode Toggle -->
-    <div class="login-mode-toggle">
-      <button class="mode-btn active" onclick="switchLoginMode('student')" id="student-mode-btn">
-        <i class="bi bi-person"></i> Student
+    <!-- Tab Bar -->
+    <div class="auth-tabs">
+      <button class="auth-tab-btn active" id="tab-login"  onclick="switchAuthTab('login')">
+        <i class="bi bi-box-arrow-in-right"></i> Login
       </button>
-      <button class="mode-btn" onclick="switchLoginMode('admin')" id="admin-mode-btn">
+      <button class="auth-tab-btn" id="tab-signup" onclick="switchAuthTab('signup')">
+        <i class="bi bi-person-plus"></i> Sign Up
+      </button>
+      <button class="auth-tab-btn" id="tab-admin"  onclick="switchAuthTab('admin')">
         <i class="bi bi-shield-lock"></i> Admin
       </button>
     </div>
 
-    <!-- Student Login -->
-    <div id="student-login-form" class="login-form-section">
+    <!-- ── TAB: Login ─────────────────────────────────────── -->
+    <div id="auth-tab-login" class="auth-tab-panel">
       <h2 class="auth-title">Welcome back</h2>
       <p class="auth-subtitle">Sign in to continue your learning journey</p>
 
@@ -131,16 +76,61 @@
         <i class="bi bi-box-arrow-in-right"></i> Sign In
       </button>
 
-      <div class="auth-divider">or</div>
-
       <div class="auth-switch">
         New to NexaAI?
-        <a href="#" onclick="showPage('register-page'); return false;">Create an account</a>
+        <a href="#" onclick="switchAuthTab('signup'); return false;">Create an account</a>
       </div>
     </div>
 
-    <!-- Admin Login -->
-    <div id="admin-login-form" class="login-form-section hidden">
+    <!-- ── TAB: Sign Up ───────────────────────────────────── -->
+    <div id="auth-tab-signup" class="auth-tab-panel hidden">
+      <h2 class="auth-title">Create your account</h2>
+      <p class="auth-subtitle">Start bridging your skill gaps today</p>
+
+      <div class="form-group">
+        <label class="form-label" for="reg-name">Full Name</label>
+        <div class="input-icon-wrap">
+          <i class="bi bi-person"></i>
+          <input id="reg-name" type="text" class="form-input" placeholder="e.g. Aryan Mishra" autocomplete="name" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="reg-email">Email Address</label>
+        <div class="input-icon-wrap">
+          <i class="bi bi-envelope"></i>
+          <input id="reg-email" type="email" class="form-input" placeholder="you@example.com" autocomplete="email" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="reg-password">Password</label>
+        <div class="input-icon-wrap">
+          <i class="bi bi-lock"></i>
+          <input id="reg-password" type="password" class="form-input" placeholder="Min 6 characters" autocomplete="new-password" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="reg-confirm">Confirm Password</label>
+        <div class="input-icon-wrap">
+          <i class="bi bi-shield-lock"></i>
+          <input id="reg-confirm" type="password" class="form-input" placeholder="Repeat password" autocomplete="new-password" />
+        </div>
+      </div>
+
+      <button id="register-btn" class="btn btn-primary btn-block btn-lg" onclick="handleRegister()">
+        <i class="bi bi-rocket-takeoff"></i> Create Account
+      </button>
+
+      <div class="auth-switch">
+        Already have an account?
+        <a href="#" onclick="switchAuthTab('login'); return false;">Sign in</a>
+      </div>
+    </div>
+
+    <!-- ── TAB: Admin ─────────────────────────────────────── -->
+    <div id="auth-tab-admin" class="auth-tab-panel hidden">
       <h2 class="auth-title">Admin Login</h2>
       <p class="auth-subtitle">Access the analytics dashboard</p>
 
@@ -164,16 +154,14 @@
         <i class="bi bi-shield-lock"></i> Admin Sign In
       </button>
 
-      <div class="auth-divider">or</div>
-
       <div class="auth-switch">
         Student Account?
-        <a href="#" onclick="switchLoginMode('student'); return false;">Sign in as Student</a>
+        <a href="#" onclick="switchAuthTab('login'); return false;">Sign in as Student</a>
       </div>
     </div>
 
   </div>
-</div><!-- /login-page -->
+</div><!-- /auth-page -->
 
 
 <!-- ══════════════════════════════════════════════════════════
@@ -266,6 +254,10 @@
           <div class="user-info-name" id="sidebar-user-name">User</div>
           <div class="user-info-role" id="sidebar-user-role">Student</div>
         </div>
+      </div>
+      <div class="nav-item" data-screen="screen-profile" onclick="navToScreen('screen-profile')" role="button" tabindex="0" style="margin-bottom:0.5rem;">
+        <i class="bi bi-person-circle"></i>
+        <span>Profile</span>
       </div>
       <button class="btn btn-secondary btn-block btn-sm" onclick="logout()">
         <i class="bi bi-box-arrow-right"></i> Sign Out
@@ -1095,6 +1087,70 @@
         </div>
 
       </section><!-- /screen-admin -->
+
+
+      <!-- ════════════════════════════════════════════════════
+           SCREEN: PROFILE
+           ════════════════════════════════════════════════════ -->
+      <section id="screen-profile" class="screen">
+
+        <div class="section-header">
+          <div class="section-title"><i class="bi bi-person-circle"></i> My Profile</div>
+        </div>
+
+        <div class="profile-card animate-fade">
+
+          <!-- Avatar -->
+          <div class="profile-avatar-lg" id="profile-avatar-lg">U</div>
+
+          <!-- User Info -->
+          <div class="profile-info">
+            <div class="profile-info-row">
+              <span class="profile-info-label"><i class="bi bi-person"></i> Name</span>
+              <span class="profile-info-value" id="profile-name">—</span>
+            </div>
+            <div class="profile-info-row">
+              <span class="profile-info-label"><i class="bi bi-envelope"></i> Email</span>
+              <span class="profile-info-value" id="profile-email">—</span>
+            </div>
+            <div class="profile-info-row">
+              <span class="profile-info-label"><i class="bi bi-shield-check"></i> Role</span>
+              <span class="profile-info-value" id="profile-role">Student</span>
+            </div>
+            <div class="profile-info-row">
+              <span class="profile-info-label"><i class="bi bi-calendar-check"></i> Member since</span>
+              <span class="profile-info-value" id="profile-since">—</span>
+            </div>
+          </div>
+
+          <!-- Stats Row -->
+          <div class="profile-stats-row">
+            <div class="profile-stat-card">
+              <div class="profile-stat-icon stat-icon-purple"><i class="bi bi-file-earmark-person-fill"></i></div>
+              <div class="profile-stat-value" id="profile-stat-resumes">0</div>
+              <div class="profile-stat-label">Resumes</div>
+            </div>
+            <div class="profile-stat-card">
+              <div class="profile-stat-icon stat-icon-cyan"><i class="bi bi-tools"></i></div>
+              <div class="profile-stat-value" id="profile-stat-skills">0</div>
+              <div class="profile-stat-label">Skills</div>
+            </div>
+            <div class="profile-stat-card">
+              <div class="profile-stat-icon stat-icon-amber"><i class="bi bi-journal-check"></i></div>
+              <div class="profile-stat-value" id="profile-stat-tests">0</div>
+              <div class="profile-stat-label">Tests</div>
+            </div>
+          </div>
+
+          <!-- Sign Out -->
+          <button class="btn btn-danger btn-lg" style="margin-top:1.5rem;" onclick="logout()">
+            <i class="bi bi-box-arrow-right"></i> Sign Out
+          </button>
+
+        </div>
+
+      </section><!-- /screen-profile -->
+
 
     </div><!-- /content-area -->
   </main><!-- /main-content -->
