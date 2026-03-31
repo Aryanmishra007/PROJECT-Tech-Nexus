@@ -1,6 +1,10 @@
-# Existing content of the README file...
+# Project Title
 
-## 🤝 Contributing
-Contributions are welcome! Please feel free to open issues and pull requests.
+<Existing content here>
 
-Maintainer/Contributor: https://github.com/HridyanshuSingh
+## Contributing
+
+<Existing content for Contributing here>
+
+## 👥 Contributors
+- [Hridyanshu Singh](https://github.com/HridyanshuSingh)
