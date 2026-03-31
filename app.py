@@ -1,10 +1,12 @@
 """
 NexaAI — AI-Driven Skill Gap Platform
-Flask Backend — Main Application (MySQL Version)
+Flask Backend — MySQL with SQLite fallback
 """
 
 import os
 import json
+import sqlite3
+import tempfile
 from datetime import datetime
 from functools import wraps
 
@@ -12,8 +14,6 @@ from flask import Flask, request, jsonify, session, send_from_directory
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
-import mysql.connector
-from mysql.connector import Error
 
 # ── Utils ──────────────────────────────────────────────────────────────
 from utils.resume_parser   import parse_resume, extract_skills_from_text
@@ -26,17 +26,28 @@ from utils.ai_service      import (
 )
 
 # ═══════════════════════════════════════════════════════════════════════
-# MySQL Configuration
+# Database Mode — MySQL if configured, else SQLite
 # ═══════════════════════════════════════════════════════════════════════
-MYSQL_CONFIG = {
-    'host':     os.environ.get('MYSQLHOST',     os.environ.get('DB_HOST',     '127.0.0.1')),
-    'port':     int(os.environ.get('MYSQLPORT', os.environ.get('DB_PORT',     3306))),
-    'user':     os.environ.get('MYSQLUSER',     os.environ.get('DB_USER',     'root')),
-    'password': os.environ.get('MYSQLPASSWORD', os.environ.get('DB_PASSWORD', 'Aryan@2007')),
-    'database': os.environ.get('MYSQLDATABASE', os.environ.get('DB_NAME',     'projectnexai_ai')),
-    'autocommit': False,
-    'charset': 'utf8mb4'
-}
+_MYSQL_HOST = os.environ.get('MYSQLHOST') or os.environ.get('DB_HOST')
+USE_MYSQL   = bool(_MYSQL_HOST)
+
+if USE_MYSQL:
+    import mysql.connector
+    from mysql.connector import Error as DbError
+    MYSQL_CONFIG = {
+        'host':     _MYSQL_HOST,
+        'port':     int(os.environ.get('MYSQLPORT', os.environ.get('DB_PORT', 3306))),
+        'user':     os.environ.get('MYSQLUSER',     os.environ.get('DB_USER',     'root')),
+        'password': os.environ.get('MYSQLPASSWORD', os.environ.get('DB_PASSWORD', '')),
+        'database': os.environ.get('MYSQLDATABASE', os.environ.get('DB_NAME',     'railway')),
+        'autocommit': False,
+        'charset': 'utf8mb4'
+    }
+    print('[NexaAI] Database mode: MySQL')
+else:
+    _default_db = os.path.join(tempfile.gettempdir(), 'nexaai.db')
+    SQLITE_PATH = os.environ.get('SQLITE_PATH', _default_db)
+    print(f'[NexaAI] Database mode: SQLite ({SQLITE_PATH})')
 
 # ═══════════════════════════════════════════════════════════════════════
 # App Setup
@@ -64,51 +75,112 @@ app.config['MAX_CONTENT_LENGTH'] = MAX_FILE_MB * 1024 * 1024
 
 
 # ═══════════════════════════════════════════════════════════════════════
-# MySQL Database
+# Database helpers — works with both MySQL and SQLite
 # ═══════════════════════════════════════════════════════════════════════
 
-class DictCursor:
-    """Wrapper to make MySQL results accessible like dictionaries"""
-    def __init__(self, cursor):
-        self.cursor = cursor
-        self.description = cursor.description
-        
+class _Conn:
+    """Unified connection wrapper for MySQL and SQLite."""
+    def __init__(self, conn, is_sqlite=False):
+        self._conn = conn
+        self._is_sqlite = is_sqlite
+
+    def cursor(self):
+        if self._is_sqlite:
+            self._conn.row_factory = sqlite3.Row
+            cur = self._conn.cursor()
+            return _Cur(cur, is_sqlite=True)
+        else:
+            cur = self._conn.cursor()
+            return _Cur(cur, is_sqlite=False)
+
+    def commit(self):  self._conn.commit()
+    def close(self):   self._conn.close()
+
+
+class _Cur:
+    """Unified cursor wrapper returning plain tuples."""
+    def __init__(self, cur, is_sqlite=False):
+        self._cur = cur
+        self._is_sqlite = is_sqlite
+
+    def execute(self, sql, params=()):
+        if self._is_sqlite:
+            sql = sql.replace('%s', '?')
+        self._cur.execute(sql, params)
+
     def fetchone(self):
-        row = self.cursor.fetchone()
-        if row and self.description:
-            return dict(zip([col[0] for col in self.description], row))
-        return row
-    
+        row = self._cur.fetchone()
+        if row is None:
+            return None
+        return tuple(row)
+
     def fetchall(self):
-        rows = self.cursor.fetchall()
-        if rows and self.description:
-            columns = [col[0] for col in self.description]
-            return [dict(zip(columns, row)) for row in rows]
-        return rows
+        rows = self._cur.fetchall()
+        return [tuple(r) for r in rows]
+
+    @property
+    def lastrowid(self):
+        return self._cur.lastrowid
+
+    def close(self): self._cur.close()
 
 
 def get_db():
-    """Get MySQL connection"""
-    try:
-        conn = mysql.connector.connect(**MYSQL_CONFIG)
-        return conn
-    except Error as e:
-        print(f'[ERROR] MySQL Connection Failed: {e}')
-        return None
+    """Return a unified DB connection (MySQL or SQLite)."""
+    if USE_MYSQL:
+        try:
+            conn = mysql.connector.connect(**MYSQL_CONFIG)
+            return _Conn(conn, is_sqlite=False)
+        except Exception as e:
+            print(f'[ERROR] MySQL failed: {e}')
+            return None
+    else:
+        try:
+            conn = sqlite3.connect(SQLITE_PATH, check_same_thread=False)
+            return _Conn(conn, is_sqlite=True)
+        except Exception as e:
+            print(f'[ERROR] SQLite failed: {e}')
+            return None
+
+
+def _sql(mysql_sql):
+    """Return SQLite-compatible SQL from MySQL SQL."""
+    if USE_MYSQL:
+        return mysql_sql
+    sql = mysql_sql
+    sql = sql.replace('INT AUTO_INCREMENT PRIMARY KEY', 'INTEGER PRIMARY KEY AUTOINCREMENT')
+    sql = sql.replace("ENUM('student','admin') DEFAULT 'student'", "TEXT DEFAULT 'student'")
+    sql = sql.replace('JSON', 'TEXT')
+    sql = sql.replace('DECIMAL(10,2)', 'REAL')
+    sql = sql.replace('FLOAT', 'REAL')
+    sql = sql.replace('VARCHAR(255)', 'TEXT')
+    sql = sql.replace('VARCHAR(50)', 'TEXT')
+    sql = sql.replace('TIMESTAMP DEFAULT CURRENT_TIMESTAMP', 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP')
+    sql = sql.replace('TIMESTAMP NULL', 'TIMESTAMP')
+    # Remove FOREIGN KEY lines for SQLite
+    lines = [l for l in sql.split('\n') if 'FOREIGN KEY' not in l and 'REFERENCES' not in l]
+    # Remove trailing commas before closing paren
+    cleaned = []
+    for i, line in enumerate(lines):
+        stripped = line.rstrip()
+        if stripped.endswith(','):
+            rest = '\n'.join(lines[i+1:]).lstrip()
+            if rest.startswith(')'):
+                stripped = stripped[:-1]
+        cleaned.append(stripped)
+    return '\n'.join(cleaned)
 
 
 def init_db():
-    """Initialize database"""
+    """Initialize database tables and admin user."""
     conn = get_db()
     if not conn:
-        print('[ERROR] Cannot connect to MySQL')
+        print('[ERROR] Cannot connect to database')
         return
-    
+
     cursor = conn.cursor()
-    
     try:
-        # Create tables
-        cursor.execute('''
+        cursor.execute(_sql('''
             CREATE TABLE IF NOT EXISTS users (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 name VARCHAR(255),
@@ -117,9 +189,9 @@ def init_db():
                 role ENUM('student','admin') DEFAULT 'student',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        ''')
-        
-        cursor.execute('''
+        '''))
+
+        cursor.execute(_sql('''
             CREATE TABLE IF NOT EXISTS resumes (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 user_id INT NOT NULL,
@@ -128,9 +200,9 @@ def init_db():
                 extracted_skills JSON,
                 FOREIGN KEY(user_id) REFERENCES users(id)
             )
-        ''')
-        
-        cursor.execute('''
+        '''))
+
+        cursor.execute(_sql('''
             CREATE TABLE IF NOT EXISTS skill_gaps (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 user_id INT NOT NULL,
@@ -140,9 +212,9 @@ def init_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY(user_id) REFERENCES users(id)
             )
-        ''')
-        
-        cursor.execute('''
+        '''))
+
+        cursor.execute(_sql('''
             CREATE TABLE IF NOT EXISTS diagnostic_tests (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 user_id INT NOT NULL,
@@ -153,9 +225,9 @@ def init_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY(user_id) REFERENCES users(id)
             )
-        ''')
-        
-        cursor.execute('''
+        '''))
+
+        cursor.execute(_sql('''
             CREATE TABLE IF NOT EXISTS learning_paths (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 user_id INT NOT NULL,
@@ -164,9 +236,9 @@ def init_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY(user_id) REFERENCES users(id)
             )
-        ''')
-        
-        cursor.execute('''
+        '''))
+
+        cursor.execute(_sql('''
             CREATE TABLE IF NOT EXISTS subscriptions (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 user_id INT NOT NULL,
@@ -177,9 +249,9 @@ def init_db():
                 end_date TIMESTAMP NULL,
                 FOREIGN KEY(user_id) REFERENCES users(id)
             )
-        ''')
-        
-        cursor.execute('''
+        '''))
+
+        cursor.execute(_sql('''
             CREATE TABLE IF NOT EXISTS payments (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 user_id INT NOT NULL,
@@ -190,27 +262,29 @@ def init_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY(user_id) REFERENCES users(id)
             )
-        ''')
-        
+        '''))
+
         conn.commit()
-        
+
         # Create admin user if not exists
         cursor.execute('SELECT id FROM users WHERE email=%s', ('arynmishra2007@gmail.com',))
-        existing = cursor.fetchone()
-        if not existing:
+        if not cursor.fetchone():
             admin_hash = generate_password_hash('Aryan!2007')
             cursor.execute(
                 'INSERT INTO users (name, email, password, role) VALUES (%s,%s,%s,%s)',
                 ('Admin', 'arynmishra2007@gmail.com', admin_hash, 'admin')
             )
             conn.commit()
-            print('[NexaAI] Admin user created: arynmishra2007@gmail.com / Aryan!2007')
-        
+            print('[NexaAI] Admin user created')
+
         cursor.close()
         conn.close()
-        print('[NexaAI] MySQL Database ready')
-    
-    except Error as e:
+        db_type = 'MySQL' if USE_MYSQL else 'SQLite'
+        print(f'[NexaAI] {db_type} database ready')
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
         print(f'[ERROR] Database init failed: {e}')
 
 
@@ -223,17 +297,16 @@ def require_admin(f):
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
             return jsonify({'error': 'Not logged in'}), 401
-        
         conn = get_db()
+        if not conn:
+            return jsonify({'error': 'Database error'}), 500
         cursor = conn.cursor()
         cursor.execute('SELECT role FROM users WHERE id=%s', (session['user_id'],))
         result = cursor.fetchone()
         cursor.close()
         conn.close()
-        
         if not result or result[0] != 'admin':
             return jsonify({'error': 'Admin access required'}), 403
-        
         return f(*args, **kwargs)
     return decorated_function
 
@@ -323,15 +396,7 @@ def login():
         if not user:
             return jsonify({'error': 'Invalid email or password'}), 401
         
-        # Unpack user data (MySQL returns tuples)
-        if isinstance(user, tuple):
-            user_id, name, email, password_hash, role = user
-        else:
-            user_id = user['id']
-            name = user['name']
-            email = user['email']
-            password_hash = user['password']
-            role = user['role']
+        user_id, name, email, password_hash, role = user[0], user[1], user[2], user[3], user[4]
         
         if not check_password_hash(password_hash, data['password']):
             return jsonify({'error': 'Invalid email or password'}), 401
@@ -352,7 +417,7 @@ def login():
             }
         }), 200
     
-    except Error as e:
+    except Exception as e:
         print(f'[ERROR] Login error: {e}')
         return jsonify({'error': str(e)}), 500
     
