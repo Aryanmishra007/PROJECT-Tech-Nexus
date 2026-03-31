@@ -1,0 +1,125 @@
+╔══════════════════════════════════════════════════════════════════════════╗
+║                 QR CODE NOT SHOWING - FIX GUIDE                          ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+❌ PROBLEM: QR code image is not displaying in payment modal
+
+✅ SOLUTION: Place your QR code file in the correct location
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📁 FILE LOCATION
+
+The payment-qr.png file must be placed in the PROJECT ROOT directory:
+
+✓ CORRECT LOCATION:
+  c:\Users\arynm\OneDrive\Documents\Desktop\project nexa\payment-qr.png
+
+✗ WRONG LOCATION (won't work):
+  c:\Users\arynm\OneDrive\Documents\Desktop\project nexa\uploads\payment-qr.png
+  c:\Users\arynm\OneDrive\Documents\Desktop\project nexa\utils\payment-qr.png
+  Any subdirectory
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 STEP-BY-STEP FIX
+
+Step 1: Find your QR code image file
+   • Should be a PNG file (payment-qr.png)
+   • Check your Downloads folder
+   • Check your Documents folder
+   • Check VS Code cache folder
+
+Step 2: Copy it to the PROJECT ROOT
+   Copy the file to:
+   c:\Users\arynm\OneDrive\Documents\Desktop\project nexa\
+
+Step 3: Rename it if necessary
+   Make sure the filename is EXACTLY: payment-qr.png
+   (lowercase, .png extension)
+
+Step 4: Verify the file is there
+   You should see payment-qr.png in the project root alongside:
+   • app.py
+   • index.html
+   • script.js
+   • style.css
+   • etc.
+
+Step 5: Restart the Flask application
+   python app.py
+
+Step 6: Reload the browser
+   Ctrl+F5 (hard refresh) or Ctrl+Shift+Del (clear cache)
+
+Step 7: Test
+   • Go to Pricing Plans
+   • Click "Upgrade Now"
+   • Select "UPI" payment method
+   • You should now see the QR code!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔧 TROUBLESHOOTING
+
+Q: I see a QR code icon instead of my image
+A: File is not in the right location. Move it to the PROJECT ROOT
+
+Q: The QR code still doesn't show after I added the file
+A: 
+   1. Make sure filename is exactly: payment-qr.png (case-sensitive)
+   2. Clear browser cache: Ctrl+Shift+Del
+   3. Hard refresh: Ctrl+F5
+   4. Restart Flask: Kill python and run again
+
+Q: Where is the project root?
+A: It's here: c:\Users\arynm\OneDrive\Documents\Desktop\project nexa
+   The folder with app.py and index.html
+
+Q: Can I use a JPG file instead?
+A: Yes, but update the HTML:
+   Change: src="payment-qr.png"
+   To: src="payment-qr.jpg"
+   And place payment-qr.jpg in the project root
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📂 COMPLETE FILE STRUCTURE (After Fix)
+
+project nexa/
+├── app.py                    ← Flask app
+├── index.html                ← Main page
+├── script.js                 ← Frontend logic
+├── style.css                 ← Styling
+├── payment-qr.png            ← YOUR QR CODE FILE (MUST BE HERE!)
+├── requirements.txt
+├── setup_mysql.sql
+├── start.bat
+├── utils/
+│   ├── resume_parser.py
+│   ├── skill_analyzer.py
+│   └── ai_service.py
+└── uploads/
+    └── (student resume files)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✨ FALLBACK BEHAVIOR
+
+If the QR code file is not found:
+   • A beautiful QR code icon will display instead
+   • Users can still copy the UPI ID
+   • Users can click "Pay via UPI App" to open their UPI app
+   • Users can manually enter their UPI ID
+
+So it still works! But showing your actual QR code is better.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Need help? Verify:
+   1. ✓ payment-qr.png exists in project root
+   2. ✓ Flask app is running (python app.py)
+   3. ✓ Browser cache cleared (Ctrl+Shift+Del)
+   4. ✓ Page reloaded (Ctrl+F5)
+
+Then go to Pricing → UPI method → You should see the QR! 🎉

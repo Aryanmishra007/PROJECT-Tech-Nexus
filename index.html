@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NexaAI — AI-Driven Skill Gap Platform</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet" />
+
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+
+  <!-- Bootstrap 5 Grid (utilities only) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+
+  <!-- App Stylesheet -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════
+     TOAST CONTAINER
+     ══════════════════════════════════════════════════════════ -->
+<div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+<!-- ══════════════════════════════════════════════════════════
+     PAGE: REGISTER
+     ══════════════════════════════════════════════════════════ -->
+<div id="register-page" class="page auth-page">
+  <div class="auth-card">
+
+    <div class="auth-logo">
+      <div class="auth-logo-icon"><i class="bi bi-cpu-fill"></i></div>
+      <span class="auth-logo-text">NexaAI</span>
+    </div>
+
+    <h2 class="auth-title">Create your account</h2>
+    <p class="auth-subtitle">Start bridging your skill gaps today</p>
+
+    <div class="form-group">
+      <label class="form-label" for="reg-name">Full Name</label>
+      <div class="input-icon-wrap">
+        <i class="bi bi-person"></i>
+        <input id="reg-name" type="text" class="form-input" placeholder="e.g. Aryan Mishra" autocomplete="name" />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="reg-email">Email Address</label>
+      <div class="input-icon-wrap">
+        <i class="bi bi-envelope"></i>
+        <input id="reg-email" type="email" class="form-input" placeholder="you@example.com" autocomplete="email" />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="reg-password">Password</label>
+      <div class="input-icon-wrap">
+        <i class="bi bi-lock"></i>
+        <input id="reg-password" type="password" class="form-input" placeholder="Min 6 characters" autocomplete="new-password" />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="reg-confirm">Confirm Password</label>
+      <div class="input-icon-wrap">
+        <i class="bi bi-shield-lock"></i>
+        <input id="reg-confirm" type="password" class="form-input" placeholder="Repeat password" autocomplete="new-password" />
+      </div>
+    </div>
+
+    <button id="register-btn" class="btn btn-primary btn-block btn-lg" onclick="handleRegister()">
+      <i class="bi bi-rocket-takeoff"></i> Create Account
+    </button>
+
+    <div class="auth-switch">
+      Already have an account?
+      <a href="#" onclick="showPage('login-page'); return false;">Sign in</a>
+    </div>
+
+  </div>
+</div><!-- /register-page -->
+
+
+<!-- ══════════════════════════════════════════════════════════
+     PAGE: LOGIN
+     ══════════════════════════════════════════════════════════ -->
+<div id="login-page" class="page auth-page active">
+  <div class="auth-card">
+
+    <div class="auth-logo">
+      <div class="auth-logo-icon"><i class="bi bi-cpu-fill"></i></div>
+      <span class="auth-logo-text">NexaAI</span>
+    </div>
+
+    <!-- Login Mode Toggle -->
+    <div class="login-mode-toggle">
+      <button class="mode-btn active" onclick="switchLoginMode('student')" id="student-mode-btn">
+        <i class="bi bi-person"></i> Student
+      </button>
+      <button class="mode-btn" onclick="switchLoginMode('admin')" id="admin-mode-btn">
+        <i class="bi bi-shield-lock"></i> Admin
+      </button>
+    </div>
+
+    <!-- Student Login -->
+    <div id="student-login-form" class="login-form-section">
+      <h2 class="auth-title">Welcome back</h2>
+      <p class="auth-subtitle">Sign in to continue your learning journey</p>
+
+      <div class="form-group">
+        <label class="form-label" for="login-email">Email Address</label>
+        <div class="input-icon-wrap">
+          <i class="bi bi-envelope"></i>
+          <input id="login-email" type="email" class="form-input" placeholder="you@example.com" autocomplete="email" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="login-password">Password</label>
+        <div class="input-icon-wrap">
+          <i class="bi bi-lock"></i>
+          <input id="login-password" type="password" class="form-input" placeholder="Your password" autocomplete="current-password" />
+        </div>
+      </div>
+
+      <button id="login-btn" class="btn btn-primary btn-block btn-lg" onclick="handleLogin()">
+        <i class="bi bi-box-arrow-in-right"></i> Sign In
+      </button>
+
+      <div class="auth-divider">or</div>
+
+      <div class="auth-switch">
+        New to NexaAI?
+        <a href="#" onclick="showPage('register-page'); return false;">Create an account</a>
+      </div>
+    </div>
+
+    <!-- Admin Login -->
+    <div id="admin-login-form" class="login-form-section hidden">
+      <h2 class="auth-title">Admin Login</h2>
+      <p class="auth-subtitle">Access the analytics dashboard</p>
+
+      <div class="form-group">
+        <label class="form-label" for="admin-email">Admin Email</label>
+        <div class="input-icon-wrap">
+          <i class="bi bi-shield-check"></i>
+          <input id="admin-email" type="email" class="form-input" placeholder="admin@nexaai.com" autocomplete="email" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="admin-password">Admin Password</label>
+        <div class="input-icon-wrap">
+          <i class="bi bi-lock"></i>
+          <input id="admin-password" type="password" class="form-input" placeholder="Your password" autocomplete="current-password" />
+        </div>
+      </div>
+
+      <button id="admin-login-btn" class="btn btn-primary btn-block btn-lg" onclick="handleAdminLogin()">
+        <i class="bi bi-shield-lock"></i> Admin Sign In
+      </button>
+
+      <div class="auth-divider">or</div>
+
+      <div class="auth-switch">
+        Student Account?
+        <a href="#" onclick="switchLoginMode('student'); return false;">Sign in as Student</a>
+      </div>
+    </div>
+
+  </div>
+</div><!-- /login-page -->
+
+
+<!-- ══════════════════════════════════════════════════════════
+     PAGE: APP
+     ══════════════════════════════════════════════════════════ -->
+<div id="app-page" class="page">
+<div class="app-layout">
+
+  <!-- ── SIDEBAR OVERLAY (mobile) ─────────────────────────── -->
+  <div id="sidebar-overlay" class="sidebar-overlay" style="display:none;" onclick="closeSidebar()"></div>
+
+  <!-- ══════════════════════════════════════════════════════
+       SIDEBAR
+       ══════════════════════════════════════════════════════ -->
+  <aside class="sidebar" id="app-sidebar" role="navigation" aria-label="Main navigation">
+
+    <div class="sidebar-header">
+      <a href="#" class="sidebar-logo" onclick="showScreen('screen-dashboard'); return false;">
+        <div class="sidebar-logo-icon"><i class="bi bi-cpu-fill"></i></div>
+        <span class="sidebar-logo-text">NexaAI</span>
+      </a>
+      <button class="sidebar-close-btn" onclick="closeSidebar()" aria-label="Close sidebar">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+
+    <nav class="sidebar-nav">
+
+      <div class="nav-section-label">Main</div>
+
+      <div class="nav-item active" data-screen="screen-dashboard" onclick="navToScreen('screen-dashboard')" role="button" tabindex="0">
+        <i class="bi bi-grid-1x2-fill"></i>
+        <span>Dashboard</span>
+      </div>
+
+      <div class="nav-item" data-screen="screen-upload" onclick="navToScreen('screen-upload')" role="button" tabindex="0">
+        <i class="bi bi-cloud-upload-fill"></i>
+        <span>Upload Resume</span>
+      </div>
+
+      <div class="nav-section-label">Analysis</div>
+
+      <div class="nav-item" data-screen="screen-skills" onclick="navToScreen('screen-skills')" role="button" tabindex="0">
+        <i class="bi bi-bar-chart-fill"></i>
+        <span>Skill Report</span>
+      </div>
+
+      <div class="nav-item" data-screen="screen-diagnostic" onclick="navToScreen('screen-diagnostic')" role="button" tabindex="0">
+        <i class="bi bi-journal-check"></i>
+        <span>Diagnostic Test</span>
+      </div>
+
+      <div class="nav-section-label">Growth</div>
+
+      <div class="nav-item" data-screen="screen-learning" onclick="navToScreen('screen-learning')" role="button" tabindex="0">
+        <i class="bi bi-map-fill"></i>
+        <span>Learning Path</span>
+      </div>
+
+      <div class="nav-item" data-screen="screen-interview" onclick="navToScreen('screen-interview')" role="button" tabindex="0">
+        <i class="bi bi-person-video3"></i>
+        <span>Mock Interview</span>
+      </div>
+
+      <div class="nav-item" data-screen="screen-ats" onclick="navToScreen('screen-ats')" role="button" tabindex="0">
+        <i class="bi bi-file-earmark-check-fill"></i>
+        <span>ATS Suggestions</span>
+      </div>
+
+      <div class="nav-section-label">Upgrade</div>
+
+      <div class="nav-item" data-screen="screen-pricing" onclick="navToScreen('screen-pricing')" role="button" tabindex="0">
+        <i class="bi bi-credit-card-fill"></i>
+        <span>Pricing Plans</span>
+      </div>
+
+      <div class="nav-section-label admin-only hidden">Admin</div>
+
+      <div class="nav-item admin-only hidden" data-screen="screen-admin" onclick="navToScreen('screen-admin')" role="button" tabindex="0" id="nav-admin-item">
+        <i class="bi bi-bar-chart-line-fill"></i>
+        <span>Analytics</span>
+      </div>
+
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="user-avatar" id="user-avatar-initials">U</div>
+        <div>
+          <div class="user-info-name" id="sidebar-user-name">User</div>
+          <div class="user-info-role" id="sidebar-user-role">Student</div>
+        </div>
+      </div>
+      <button class="btn btn-secondary btn-block btn-sm" onclick="logout()">
+        <i class="bi bi-box-arrow-right"></i> Sign Out
+      </button>
+    </div>
+
+  </aside><!-- /sidebar -->
+
+
+  <!-- ══════════════════════════════════════════════════════
+       MAIN CONTENT
+       ══════════════════════════════════════════════════════ -->
+  <main class="main-content" id="main-content">
+
+    <!-- Header -->
+    <header class="main-header">
+      <button class="menu-toggle" onclick="toggleSidebar()" aria-label="Toggle sidebar">
+        <i class="bi bi-list"></i>
+      </button>
+      <div class="header-title" id="header-title">Dashboard</div>
+      <div class="header-actions">
+        <span class="header-badge" id="user-display-name">User</span>
+      </div>
+    </header>
+
+    <!-- Content Area -->
+    <div class="content-area">
+
+      <!-- ════════════════════════════════════════════════════
+           SCREEN 1 — DASHBOARD
+           ════════════════════════════════════════════════════ -->
+      <section id="screen-dashboard" class="screen active">
+
+        <!-- Welcome Banner -->
+        <div class="welcome-banner animate-fade">
+          <h1>Welcome back, <span id="user-display-name-banner">there</span>! 👋</h1>
+          <p>Your AI-powered career development platform. Analyze skills, bridge gaps, and land your dream role.</p>
+        </div>
+
+        <!-- Stat Cards -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-purple"><i class="bi bi-file-earmark-person-fill"></i></div>
+            <div class="stat-label">Resumes Analyzed</div>
+            <div class="stat-value" id="stat-resumes">0</div>
+            <div class="stat-change up"><i class="bi bi-arrow-up-short"></i> All time</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-cyan"><i class="bi bi-bullseye"></i></div>
+            <div class="stat-label">Best Match Score</div>
+            <div class="stat-value" id="stat-match">0%</div>
+            <div class="stat-change up"><i class="bi bi-arrow-up-short"></i> Latest result</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-amber"><i class="bi bi-tools"></i></div>
+            <div class="stat-label">Skills Tracked</div>
+            <div class="stat-value" id="stat-skills">0</div>
+            <div class="stat-change up"><i class="bi bi-arrow-up-short"></i> Identified</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-green"><i class="bi bi-person-check-fill"></i></div>
+            <div class="stat-label">Interviews Done</div>
+            <div class="stat-value" id="stat-interviews">0</div>
+            <div class="stat-change up"><i class="bi bi-arrow-up-short"></i> Practice sessions</div>
+          </div>
+        </div>
+
+        <!-- Quick Analyze -->
+        <div class="quick-analyze-card">
+          <div class="section-header">
+            <div class="section-title"><i class="bi bi-lightning-charge-fill"></i> Quick Skill Analysis</div>
+          </div>
+          <p class="text-muted fs-sm mb-4">Select a target role and instantly see how your skills match up against industry requirements.</p>
+          <div class="flex items-center gap-3 flex-wrap">
+            <select id="target-role" class="role-select" aria-label="Select target role">
+              <option value="">— Select Target Role —</option>
+              <option value="ai">AI Engineer</option>
+              <option value="data_analyst">Data Analyst</option>
+              <option value="web_developer">Web Developer</option>
+              <option value="ml_engineer">ML Engineer</option>
+              <option value="devops">DevOps Engineer</option>
+            </select>
+            <button id="analyze-btn" class="btn btn-primary" onclick="quickAnalyze()">
+              <i class="bi bi-search"></i> Analyze Skills
+            </button>
+            <button class="btn btn-secondary" onclick="navToScreen('screen-upload')">
+              <i class="bi bi-cloud-upload"></i> Upload Resume
+            </button>
+          </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="section-header mt-4">
+          <div class="section-title"><i class="bi bi-clock-history"></i> Recent Activity</div>
+        </div>
+        <div class="activity-list" id="activity-list">
+          <div class="activity-item">
+            <div class="activity-icon stat-icon-purple"><i class="bi bi-cpu-fill"></i></div>
+            <div class="activity-text">
+              <strong>NexaAI platform ready</strong> — Upload your resume to get started
+            </div>
+            <span class="activity-time">Just now</span>
+          </div>
+          <div class="activity-item">
+            <div class="activity-icon stat-icon-cyan"><i class="bi bi-info-circle"></i></div>
+            <div class="activity-text">
+              Supports AI Engineer, Data Analyst, Web Developer, ML Engineer, DevOps roles
+            </div>
+            <span class="activity-time">Today</span>
+          </div>
+          <div class="activity-item">
+            <div class="activity-icon stat-icon-green"><i class="bi bi-lightbulb-fill"></i></div>
+            <div class="activity-text">
+              Get personalized learning paths, mock interviews &amp; ATS optimization tips
+            </div>
+            <span class="activity-time">Today</span>
+          </div>
+        </div>
+
+      </section><!-- /screen-dashboard -->
+
+
+      <!-- ════════════════════════════════════════════════════
+           SCREEN 2 — UPLOAD RESUME
+           ════════════════════════════════════════════════════ -->
+      <section id="screen-upload" class="screen">
+
+        <div class="section-header">
+          <div class="section-title"><i class="bi bi-cloud-upload-fill"></i> Upload Your Resume</div>
+        </div>
+        <p class="text-muted fs-sm mb-4">Upload your resume (PDF, DOCX, or TXT) and our AI will extract your skills automatically.</p>
+
+        <!-- Drop Zone -->
+        <div id="upload-zone" class="upload-zone"
+             ondragover="handleDragOver(event)"
+             ondragleave="handleDragLeave(event)"
+             ondrop="handleDrop(event)"
+             onclick="document.getElementById('file-input').click()">
+          <input type="file" id="file-input" accept=".pdf,.docx,.txt" />
+          <div class="upload-icon"><i class="bi bi-file-earmark-arrow-up-fill"></i></div>
+          <div class="upload-title">Drag &amp; drop your resume here</div>
+          <div class="upload-subtitle">or click to browse files</div>
+          <div class="upload-types">
+            <span class="upload-type-badge"><i class="bi bi-filetype-pdf"></i> PDF</span>
+            <span class="upload-type-badge"><i class="bi bi-filetype-docx"></i> DOCX</span>
+            <span class="upload-type-badge"><i class="bi bi-filetype-txt"></i> TXT</span>
+            <span class="upload-type-badge"><i class="bi bi-hdd-fill"></i> Max 10MB</span>
+          </div>
+        </div>
+
+        <!-- Selected File Info -->
+        <div id="selected-file-info" class="selected-file-info hidden">
+          <i class="bi bi-file-earmark-check-fill text-success"></i>
+          <span class="selected-file-name" id="selected-file-name">resume.pdf</span>
+          <span class="text-muted fs-xs" id="selected-file-size"></span>
+        </div>
+
+        <!-- Progress -->
+        <div id="upload-progress-wrap" class="hidden" style="margin-bottom:1rem;">
+          <div class="progress-wrap">
+            <div class="progress-bar" id="upload-progress" style="width:0%"></div>
+          </div>
+          <div class="progress-label"><span id="upload-progress-pct">0%</span></div>
+        </div>
+
+        <button id="upload-btn" class="btn btn-primary btn-lg" onclick="startUpload()" disabled>
+          <i class="bi bi-cloud-upload-fill"></i> Upload &amp; Analyze
+        </button>
+
+        <!-- Results -->
+        <div id="upload-results" class="upload-results hidden" style="margin-top:1.5rem;">
+          <div class="results-title">
+            <i class="bi bi-check-circle-fill"></i>
+            Resume Parsed — <span id="parsed-skill-count">0</span> skills detected
+          </div>
+
+          <div style="display:flex; gap:2rem; margin-bottom:1rem; flex-wrap:wrap;">
+            <div>
+              <span class="text-muted fs-xs">Detected Name</span>
+              <div class="fw-600" id="parsed-name">—</div>
+            </div>
+            <div>
+              <span class="text-muted fs-xs">Email</span>
+              <div class="fw-600" id="parsed-email">—</div>
+            </div>
+          </div>
+
+          <div class="skills-section-title">
+            <i class="bi bi-check-circle text-success"></i> Extracted Skills
+          </div>
+          <div class="chip-container" id="parsed-skills" style="margin-bottom:1.5rem;"></div>
+
+          <div class="flex gap-3 flex-wrap">
+            <button class="btn btn-primary" onclick="navToScreen('screen-skills')">
+              <i class="bi bi-bar-chart-fill"></i> View Skill Report
+            </button>
+            <button class="btn btn-secondary" onclick="quickAnalyze()">
+              <i class="bi bi-lightning-charge"></i> Analyze Skills
+            </button>
+          </div>
+        </div>
+
+      </section><!-- /screen-upload -->
+
+
+      <!-- ════════════════════════════════════════════════════
+           SCREEN 3 — SKILL REPORT
+           ════════════════════════════════════════════════════ -->
+      <section id="screen-skills" class="screen">
+
+        <div class="section-header">
+          <div class="section-title"><i class="bi bi-bar-chart-fill"></i> Skill Gap Report</div>
+          <button class="btn btn-secondary btn-sm" onclick="navToScreen('screen-upload')">
+            <i class="bi bi-cloud-upload"></i> New Resume
+          </button>
+        </div>
+
+        <!-- Role + Score Header -->
+        <div class="skills-header animate-fade">
+
+          <!-- Circular Ring -->
+          <div class="ring-container">
+            <svg class="ring-svg" width="120" height="120" viewBox="0 0 120 120">
+              <defs>
+                <linearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%"   stop-color="#7c3aed"/>
+                  <stop offset="100%" stop-color="#06b6d4"/>
+                </linearGradient>
+              </defs>
+              <circle class="ring-bg"   cx="60" cy="60" r="54" />
+              <circle class="ring-fill" id="circle-fill" cx="60" cy="60" r="54" />
+              <text class="ring-label" x="60" y="56" style="transform:rotate(90deg); transform-origin:center;">
+                <tspan class="ring-value-text" id="ring-value" x="60" dy="0" text-anchor="middle" dominant-baseline="middle" style="font-size:1.2rem;font-family:Syne,sans-serif;font-weight:800;fill:#e8e8f0;">0%</tspan>
+              </text>
+              <text x="60" y="72" text-anchor="middle" style="font-size:0.6rem;fill:rgba(232,232,240,0.5);font-family:DM Sans,sans-serif;">Match</text>
+            </svg>
+            <span class="badge badge-purple" id="match-pct">0%</span>
+          </div>
+
+          <div class="ring-info">
+            <div class="role-badge-large">
+              <i class="bi bi-briefcase-fill"></i>
+              <span id="role-label">AI Engineer</span>
+            </div>
+            <div class="readiness-label">Readiness Level</div>
+            <div class="readiness-value gradient-text" id="readiness-value">—</div>
+            <p class="recommendation-text" id="recommendation-text">Analyze your skills to get a personalized recommendation.</p>
+          </div>
+        </div>
+
+        <!-- Category Progress Bars -->
+        <div class="category-bars">
+
+          <div class="cat-bar-row">
+            <div class="cat-bar-header">
+              <span class="cat-bar-label"><i class="bi bi-code-slash"></i> Technical Skills</span>
+              <span class="cat-bar-pct" id="pct-technical">0%</span>
+            </div>
+            <div class="cat-bar-track">
+              <div class="cat-bar-fill bar-green" id="bar-technical" style="width:0%"></div>
+            </div>
+          </div>
+
+          <div class="cat-bar-row">
+            <div class="cat-bar-header">
+              <span class="cat-bar-label"><i class="bi bi-tools"></i> Tools &amp; Platforms</span>
+              <span class="cat-bar-pct" id="pct-tools">0%</span>
+            </div>
+            <div class="cat-bar-track">
+              <div class="cat-bar-fill bar-amber" id="bar-tools" style="width:0%"></div>
+            </div>
+          </div>
+
+          <div class="cat-bar-row">
+            <div class="cat-bar-header">
+              <span class="cat-bar-label"><i class="bi bi-people-fill"></i> Soft Skills</span>
+              <span class="cat-bar-pct" id="pct-soft">0%</span>
+            </div>
+            <div class="cat-bar-track">
+              <div class="cat-bar-fill bar-purple" id="bar-soft" style="width:0%"></div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Skill Chips Grid -->
+        <div class="row g-3 mb-3">
+
+          <div class="col-12 col-md-4">
+            <div class="skills-section">
+              <div class="skills-section-title">
+                <i class="bi bi-check-circle-fill text-success"></i>
+                Skills You Have
+                <span class="skills-count-badge" id="count-have">0</span>
+              </div>
+              <div class="chip-container" id="skills-have">
+                <span class="text-muted fs-sm" style="font-style:italic">Analyze your skills to see results</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <div class="skills-section">
+              <div class="skills-section-title">
+                <i class="bi bi-x-circle-fill text-danger"></i>
+                Missing Skills
+                <span class="skills-count-badge" id="count-missing">0</span>
+              </div>
+              <div class="chip-container" id="skills-missing">
+                <span class="text-muted fs-sm" style="font-style:italic">No data yet</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <div class="skills-section">
+              <div class="skills-section-title">
+                <i class="bi bi-star-fill text-warning"></i>
+                Priority to Learn
+                <span class="skills-count-badge" id="count-priority">0</span>
+              </div>
+              <div class="chip-container" id="skills-priority">
+                <span class="text-muted fs-sm" style="font-style:italic">No data yet</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex gap-3 flex-wrap">
+          <button id="start-diagnostic-btn" class="btn btn-primary" onclick="startDiagnosticTest()">
+            <i class="bi bi-journal-check"></i> Start Diagnostic Test
+          </button>
+          <button class="btn btn-secondary" onclick="navToScreen('screen-learning')">
+            <i class="bi bi-map-fill"></i> View Learning Path
+          </button>
+          <button class="btn btn-outline" onclick="navToScreen('screen-ats')">
+            <i class="bi bi-file-earmark-check"></i> ATS Suggestions
+          </button>
+        </div>
+
+      </section><!-- /screen-skills -->
+
+
+      <!-- ════════════════════════════════════════════════════
+           SCREEN 4 — DIAGNOSTIC TEST
+           ════════════════════════════════════════════════════ -->
+      <section id="screen-diagnostic" class="screen">
+
+        <div class="diagnostic-header">
+          <div>
+            <div class="section-title">
+              <i class="bi bi-journal-check"></i>
+              Diagnostic Test — <span id="diagnostic-skill-name">—</span>
+            </div>
+            <p class="text-muted fs-sm mt-2">Test your knowledge and identify specific gaps to address</p>
+          </div>
+          <div class="diagnostic-progress">
+            <span class="text-muted fs-sm" id="diag-progress-text">0/0</span>
+            <div class="diag-progress-bar-wrap progress-wrap">
+              <div class="progress-bar" id="diag-progress-bar" style="width:0%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Question Card -->
+        <div id="diag-question-card" class="question-card animate-fade">
+          <div class="question-num" id="diag-question-num">Question 1 of 4</div>
+          <div class="question-text" id="diag-question-text">Loading question...</div>
+          <div class="options-grid" id="diag-options">
+            <!-- Options rendered by JS -->
+          </div>
+          <div id="diag-explanation" class="explanation-box hidden"></div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="flex gap-3 items-center" style="margin-top:1rem;">
+          <button id="diag-next-btn" class="btn btn-primary" onclick="nextDiagnosticQuestion()" disabled>
+            Next Question <i class="bi bi-arrow-right"></i>
+          </button>
+          <button class="btn btn-secondary" onclick="navToScreen('screen-skills')">
+            <i class="bi bi-arrow-left"></i> Back to Report
+          </button>
+        </div>
+
+        <!-- Result Card -->
+        <div id="diag-result" class="diagnostic-result-card hidden" style="margin-top:1.5rem;">
+          <div style="font-size:3rem; margin-bottom:1rem;">🎯</div>
+          <h2 class="gradient-text" style="margin-bottom:0.5rem;">Test Complete!</h2>
+          <div style="font-size:2.5rem; font-family:Syne,sans-serif; font-weight:800; margin-bottom:0.25rem;" id="result-score">0/4</div>
+          <div style="font-size:1.25rem; color:var(--muted); margin-bottom:1rem;" id="result-pct">0%</div>
+          <p class="mb-4" id="result-message">—</p>
+          <div class="flex gap-3 justify-center flex-wrap">
+            <button class="btn btn-primary" onclick="navToScreen('screen-learning')">
+              <i class="bi bi-map-fill"></i> View Learning Path
+            </button>
+            <button class="btn btn-secondary" onclick="startDiagnosticTest()">
+              <i class="bi bi-arrow-repeat"></i> Retry
+            </button>
+          </div>
+        </div>
+
+      </section><!-- /screen-diagnostic -->
+
+
+      <!-- ════════════════════════════════════════════════════
+           SCREEN 5 — LEARNING PATH
+           ════════════════════════════════════════════════════ -->
+      <section id="screen-learning" class="screen">
+
+        <div class="section-header">
+          <div>
+            <div class="section-title"><i class="bi bi-map-fill"></i> Personalized Learning Path</div>
+            <p class="text-muted fs-sm mt-2" id="learning-path-title">Your step-by-step roadmap to becoming job-ready</p>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="loadLearningPath()">
+            <i class="bi bi-arrow-repeat"></i> Refresh
+          </button>
+        </div>
+
+        <!-- Roadmap -->
+        <div class="roadmap-container" id="roadmap-container">
+          <div class="loading-overlay">
+            <div class="spinner spinner-lg"></div>
+            <p class="loading-text">Building your personalized roadmap...</p>
+          </div>
+        </div>
+
+        <div class="flex gap-3 flex-wrap" style="margin-top:1.5rem;">
+          <button class="btn btn-primary" onclick="navToScreen('screen-interview')">
+            <i class="bi bi-person-video3"></i> Practice Interview
+          </button>
+          <button class="btn btn-secondary" onclick="navToScreen('screen-diagnostic')">
+            <i class="bi bi-journal-check"></i> Take Diagnostic Test
+          </button>
+        </div>
+
+      </section><!-- /screen-learning -->
+
+
+      <!-- ════════════════════════════════════════════════════
+           SCREEN 6 — MOCK INTERVIEW
+           ════════════════════════════════════════════════════ -->
+      <section id="screen-interview" class="screen">
+
+        <div class="section-header">
+          <div class="section-title"><i class="bi bi-person-video3"></i> AI Mock Interview</div>
+          <div class="flex items-center gap-3">
+            <select id="interview-role-select" class="role-select" style="min-width:180px;" aria-label="Select role for interview">
+              <option value="ai">AI Engineer</option>
+              <option value="data_analyst">Data Analyst</option>
+              <option value="web_developer">Web Developer</option>
+              <option value="ml_engineer">ML Engineer</option>
+              <option value="devops">DevOps Engineer</option>
+            </select>
+            <button class="btn btn-secondary btn-sm" onclick="loadInterviewQuestions(document.getElementById('interview-role-select').value)">
+              <i class="bi bi-arrow-repeat"></i> New Set
+            </button>
+          </div>
+        </div>
+
+        <div class="interview-layout">
+
+          <!-- Main Interview Area -->
+          <div class="interview-main">
+
+            <!-- Question Card -->
+            <div class="question-card-interview animate-fade" id="interview-question-card">
+              <div class="q-num-badge" id="q-num">
+                <i class="bi bi-question-circle"></i> Question 1 of 5
+              </div>
+              <p class="q-text" id="q-text">Loading interview question...</p>
+            </div>
+
+            <!-- Answer Area -->
+            <div class="answer-section">
+              <div class="answer-section-title">
+                <i class="bi bi-pencil-square"></i> Your Answer
+              </div>
+              <textarea
+                id="answer-box"
+                class="answer-textarea"
+                placeholder="Type your answer here. Be specific — use examples, explain concepts, and mention relevant technologies you've worked with..."
+                rows="6"
+              ></textarea>
+              <div class="answer-actions">
+                <button id="submit-answer-btn" class="btn btn-primary" onclick="submitAnswer()">
+                  <i class="bi bi-send-fill"></i> Submit Answer
+                </button>
+                <button id="mic-btn" class="mic-btn" onclick="toggleMic()" title="Voice input">
+                  <i class="bi bi-mic"></i>
+                </button>
+                <button class="btn btn-secondary btn-sm" onclick="nextQuestion()" id="next-question-btn">
+                  Next Question <i class="bi bi-arrow-right"></i>
+                </button>
+                <span class="text-muted fs-xs" id="q-word-count"></span>
+              </div>
+            </div>
+
+            <!-- Feedback Card -->
+            <div id="feedback-card" class="feedback-card hidden">
+              <div class="feedback-header">
+                <div class="feedback-score">
+                  <div class="score-circle good" id="fb-score-circle">7.5</div>
+                  <div>
+                    <div class="feedback-rating" id="fb-rating">Good</div>
+                    <div class="text-muted fs-xs">AI Score</div>
+                  </div>
+                </div>
+                <span class="badge badge-cyan">AI Feedback</span>
+              </div>
+
+              <div class="feedback-general" id="fb-general">Feedback will appear here after you submit your answer.</div>
+
+              <div class="row g-3">
+                <div class="col-12 col-md-6">
+                  <div class="feedback-section-title green">✅ Strengths</div>
+                  <ul class="feedback-list strengths" id="fb-strengths"></ul>
+                </div>
+                <div class="col-12 col-md-6">
+                  <div class="feedback-section-title amber">💡 Improvements</div>
+                  <ul class="feedback-list improvements" id="fb-improvements"></ul>
+                </div>
+              </div>
+
+              <div style="margin-top:0.875rem;">
+                <div class="feedback-section-title" style="color:var(--accent-light);">🔑 Keywords Used</div>
+                <div class="chip-container" id="fb-keywords"></div>
+              </div>
+            </div>
+
+          </div><!-- /interview-main -->
+
+          <!-- Sidebar Widgets -->
+          <div class="interview-sidebar">
+
+            <!-- Progress Widget -->
+            <div class="sidebar-widget">
+              <div class="widget-title"><i class="bi bi-activity"></i> Session Progress</div>
+              <div class="q-progress-bar-wrap">
+                <div class="q-progress-bar" id="q-progress-bar"></div>
+              </div>
+              <div class="text-muted fs-xs mt-2" id="q-done-label">0/0 answered</div>
+              <div class="answer-dots" id="answer-history">
+                <!-- Dots rendered by JS -->
+              </div>
+            </div>
+
+            <!-- Interview Tips Widget -->
+            <div class="sidebar-widget">
+              <div class="widget-title"><i class="bi bi-lightbulb-fill"></i> Interview Tips</div>
+              <div class="tips-list">
+                <div class="tip-item">
+                  <i class="bi bi-dot"></i>
+                  Use the <strong>STAR method</strong>: Situation, Task, Action, Result
+                </div>
+                <div class="tip-item">
+                  <i class="bi bi-dot"></i>
+                  Give <strong>concrete examples</strong> from real projects
+                </div>
+                <div class="tip-item">
+                  <i class="bi bi-dot"></i>
+                  <strong>Quantify</strong> achievements wherever possible
+                </div>
+                <div class="tip-item">
+                  <i class="bi bi-dot"></i>
+                  Aim for <strong>100–200 words</strong> per answer
+                </div>
+                <div class="tip-item">
+                  <i class="bi bi-dot"></i>
+                  Use <strong>technical terms</strong> relevant to the role
+                </div>
+              </div>
+            </div>
+
+            <!-- Keyboard shortcut hint -->
+            <div class="sidebar-widget">
+              <div class="widget-title"><i class="bi bi-keyboard"></i> Shortcuts</div>
+              <div class="tips-list">
+                <div class="tip-item"><i class="bi bi-dot"></i>Click mic for <strong>voice input</strong></div>
+                <div class="tip-item"><i class="bi bi-dot"></i>Submit then click <strong>Next Question</strong></div>
+              </div>
+            </div>
+
+          </div><!-- /interview-sidebar -->
+
+        </div><!-- /interview-layout -->
+
+      </section><!-- /screen-interview -->
+
+
+      <!-- ════════════════════════════════════════════════════
+           SCREEN 7 — ATS SUGGESTIONS
+           ════════════════════════════════════════════════════ -->
+      <section id="screen-ats" class="screen">
+
+        <div class="section-header">
+          <div class="section-title"><i class="bi bi-file-earmark-check-fill"></i> ATS Optimization</div>
+          <button class="btn btn-secondary btn-sm" onclick="loadATSSuggestions()">
+            <i class="bi bi-arrow-repeat"></i> Refresh
+          </button>
+        </div>
+        <p class="text-muted fs-sm mb-4">Optimize your resume to pass Applicant Tracking Systems and get more interview calls.</p>
+
+        <!-- ATS Score -->
+        <div class="ats-score-card animate-fade">
+          <div class="text-muted fs-sm mb-2">ATS Compatibility Score</div>
+          <div class="ats-score-value" id="ats-score-value">—</div>
+          <div class="ats-score-label">Based on keyword coverage and formatting</div>
+          <div class="ats-score-meter">
+            <div class="cat-bar-track" style="height:12px;">
+              <div class="cat-bar-fill bar-green" id="ats-score-bar" style="width:0%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Missing Keywords -->
+        <div class="card mb-4">
+          <div class="section-title mb-3">
+            <i class="bi bi-key-fill" style="color:var(--accent2);"></i> Add These Keywords to Your Resume
+          </div>
+          <div class="chip-container" id="ats-keywords">
+            <span class="text-muted fs-sm" style="font-style:italic">Analyze your skills first to see keyword recommendations</span>
+          </div>
+        </div>
+
+        <!-- Suggestions List -->
+        <div class="section-title mb-3">
+          <i class="bi bi-list-check"></i> Actionable Suggestions
+        </div>
+        <div id="ats-suggestions-list">
+          <div class="empty-state">
+            <i class="bi bi-file-earmark-check"></i>
+            <p>Upload a resume and analyze your skills to see ATS suggestions</p>
+          </div>
+        </div>
+
+      </section><!-- /screen-ats -->
+
+
+      <!-- ════════════════════════════════════════════════════
+           SCREEN 8 — PRICING PLANS
+           ════════════════════════════════════════════════════ -->
+      <section id="screen-pricing" class="screen">
+
+        <div class="section-header">
+          <div class="section-title"><i class="bi bi-credit-card-fill"></i> Upgrade Your Plan</div>
+          <span class="badge badge-cyan" id="current-plan-badge">Free Plan</span>
+        </div>
+        <p class="text-muted fs-sm mb-4">Choose the perfect plan to accelerate your career preparation.</p>
+
+        <div class="pricing-grid">
+          
+          <!-- Basic Plan -->
+          <div class="pricing-card">
+            <div class="pricing-badge">Starter</div>
+            <h3 class="pricing-plan">Basic</h3>
+            <div class="pricing-price">
+              <span class="price-currency">₹</span>
+              <span class="price-amount">499</span>
+              <span class="price-period">/month</span>
+            </div>
+            <ul class="pricing-features">
+              <li><i class="bi bi-check-circle-fill"></i> Resume Analysis</li>
+              <li><i class="bi bi-check-circle-fill"></i> Skill Gap Report</li>
+              <li><i class="bi bi-check-circle-fill"></i> 5 Mock Interviews</li>
+              <li><i class="bi bi-check-circle-fill"></i> Basic Learning Path</li>
+              <li><i class="bi bi-check-circle-fill"></i> Email Support</li>
+            </ul>
+            <button class="btn btn-secondary btn-block" onclick="openPaymentModal('basic', 499)">
+              <i class="bi bi-cart-plus"></i> Choose Basic
+            </button>
+          </div>
+
+          <!-- Pro Plan -->
+          <div class="pricing-card popular">
+            <div class="pricing-badge popular">Most Popular</div>
+            <h3 class="pricing-plan">Professional</h3>
+            <div class="pricing-price">
+              <span class="price-currency">₹</span>
+              <span class="price-amount">999</span>
+              <span class="price-period">/3 months</span>
+            </div>
+            <ul class="pricing-features">
+              <li><i class="bi bi-check-circle-fill"></i> Everything in Basic</li>
+              <li><i class="bi bi-check-circle-fill"></i> Unlimited Mock Interviews</li>
+              <li><i class="bi bi-check-circle-fill"></i> AI Interview Feedback</li>
+              <li><i class="bi bi-check-circle-fill"></i> Personalized Learning Path</li>
+              <li><i class="bi bi-check-circle-fill"></i> Priority Support</li>
+              <li><i class="bi bi-check-circle-fill"></i> ATS Resume Optimization</li>
+            </ul>
+            <button class="btn btn-primary btn-block" onclick="openPaymentModal('pro', 999)">
+              <i class="bi bi-rocket-takeoff"></i> Choose Pro
+            </button>
+          </div>
+
+          <!-- Premium Plan -->
+          <div class="pricing-card">
+            <div class="pricing-badge">Complete</div>
+            <h3 class="pricing-plan">Premium</h3>
+            <div class="pricing-price">
+              <span class="price-currency">₹</span>
+              <span class="price-amount">1999</span>
+              <span class="price-period">/6 months</span>
+            </div>
+            <ul class="pricing-features">
+              <li><i class="bi bi-check-circle-fill"></i> Everything in Pro</li>
+              <li><i class="bi bi-check-circle-fill"></i> One-on-One Mentorship</li>
+              <li><i class="bi bi-check-circle-fill"></i> Company-Specific Prep</li>
+              <li><i class="bi bi-check-circle-fill"></i> Project Review & Guidance</li>
+              <li><i class="bi bi-check-circle-fill"></i> 24/7 Priority Support</li>
+              <li><i class="bi bi-check-circle-fill"></i> Placement Assistance</li>
+              <li><i class="bi bi-check-circle-fill"></i> Certificate of Completion</li>
+            </ul>
+            <button class="btn btn-secondary btn-block" onclick="openPaymentModal('premium', 1999)">
+              <i class="bi bi-gem"></i> Choose Premium
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Payment Methods Info -->
+        <div class="card mt-4">
+          <div class="section-title mb-3">
+            <i class="bi bi-shield-lock-fill" style="color: var(--accent2);"></i> Secure Payment Methods
+          </div>
+          <div class="payment-methods">
+            <div class="payment-method">
+              <i class="bi bi-credit-card-2-front-fill"></i>
+              <span>Credit/Debit Card</span>
+            </div>
+            <div class="payment-method">
+              <i class="bi bi-phone-fill"></i>
+              <span>UPI</span>
+            </div>
+            <div class="payment-method">
+              <i class="bi bi-bank"></i>
+              <span>Net Banking</span>
+            </div>
+            <div class="payment-method">
+              <i class="bi bi-wallet2"></i>
+              <span>Wallets</span>
+            </div>
+          </div>
+          <p class="text-muted fs-xs mt-3">
+            <i class="bi bi-shield-check"></i> All payments are 256-bit SSL encrypted. 100% secure & refundable within 7 days.
+          </p>
+        </div>
+
+      </section><!-- /screen-pricing -->
+
+
+      <!-- ════════════════════════════════════════════════════
+           SCREEN 9 — ADMIN ANALYTICS
+           ════════════════════════════════════════════════════ -->
+      <section id="screen-admin" class="screen" id="admin-content">
+
+        <div class="section-header">
+          <div class="section-title"><i class="bi bi-bar-chart-line-fill"></i> Admin Analytics Dashboard</div>
+          <button class="btn btn-secondary btn-sm" onclick="loadAdminAnalytics()">
+            <i class="bi bi-arrow-repeat"></i> Refresh Data
+          </button>
+        </div>
+
+        <!-- Admin Stats Row -->
+        <div class="admin-stats-row">
+
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-purple"><i class="bi bi-people-fill"></i></div>
+            <div class="stat-label">Total Users</div>
+            <div class="stat-value" id="admin-total-users">—</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-cyan"><i class="bi bi-file-earmark-person-fill"></i></div>
+            <div class="stat-label">Resumes Analyzed</div>
+            <div class="stat-value" id="admin-total-resumes">—</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-green"><i class="bi bi-bullseye"></i></div>
+            <div class="stat-label">Avg Match Score</div>
+            <div class="stat-value" id="admin-avg-score">—</div>
+          </div>
+
+        </div>
+
+        <!-- Common Skill Gaps Chart -->
+        <div class="chart-card">
+          <div class="section-title mb-3">
+            <i class="bi bi-exclamation-diamond-fill" style="color:var(--danger);"></i>
+            Most Common Skill Gaps
+          </div>
+          <div class="bar-chart" id="skill-gaps-chart">
+            <div class="empty-state" style="padding:1rem;">
+              <p class="text-muted fs-sm">No data available. Load analytics first.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Role-Wise Readiness Table -->
+        <div class="chart-card">
+          <div class="section-title mb-3">
+            <i class="bi bi-table" style="color:var(--accent2);"></i>
+            Role-Wise Readiness
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="readiness-table">
+              <thead>
+                <tr>
+                  <th>Role</th>
+                  <th>Users</th>
+                  <th>Avg Score</th>
+                  <th>Readiness</th>
+                </tr>
+              </thead>
+              <tbody id="role-readiness-body">
+                <tr>
+                  <td colspan="4" class="text-center text-muted" style="padding:2rem;">
+                    Click "Refresh Data" to load analytics
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </section><!-- /screen-admin -->
+
+    </div><!-- /content-area -->
+  </main><!-- /main-content -->
+
+</div><!-- /app-layout -->
+</div><!-- /app-page -->
+
+
+<!-- Bootstrap JS (optional utilities) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Payment Modal -->
+<div id="payment-modal" class="modal-overlay hidden">
+  <div class="modal-content payment-modal">
+    <div class="modal-header">
+      <h3><i class="bi bi-credit-card-fill"></i> Complete Payment</h3>
+      <button class="modal-close" onclick="closePaymentModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="payment-summary">
+        <div class="payment-plan-name" id="payment-plan-name">Professional Plan</div>
+        <div class="payment-amount" id="payment-amount">₹999</div>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">Payment Method</label>
+        <div class="payment-options">
+          <label class="payment-option selected">
+            <input type="radio" name="payment_method" value="card" checked>
+            <i class="bi bi-credit-card-2-front-fill"></i>
+            <span>Card</span>
+          </label>
+          <label class="payment-option">
+            <input type="radio" name="payment_method" value="upi">
+            <i class="bi bi-phone-fill"></i>
+            <span>UPI</span>
+          </label>
+          <label class="payment-option">
+            <input type="radio" name="payment_method" value="netbanking">
+            <i class="bi bi-bank"></i>
+            <span>Net Banking</span>
+          </label>
+        </div>
+      </div>
+      
+      <!-- Card Details -->
+      <div id="card-details">
+        <div class="form-group">
+          <label class="form-label">Card Number</label>
+          <input type="text" class="form-input" id="card-number" placeholder="1234 5678 9012 3456" maxlength="19">
+        </div>
+        <div class="row g-3">
+          <div class="col-6">
+            <label class="form-label">Expiry Date</label>
+            <input type="text" class="form-input" id="card-expiry" placeholder="MM/YY" maxlength="5">
+          </div>
+          <div class="col-6">
+            <label class="form-label">CVV</label>
+            <input type="password" class="form-input" id="card-cvv" placeholder="***" maxlength="4">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Name on Card</label>
+          <input type="text" class="form-input" id="card-name" placeholder="ARYAN MISHRA">
+        </div>
+      </div>
+      
+      <!-- UPI Details -->
+      <div id="upi-details" class="hidden">
+        <div class="qr-payment-section">
+          <div class="qr-code-container">
+            <img src="payment-qr.png" alt="Payment QR Code" class="payment-qr-image" 
+                 onerror="showQrFallback()">>
+          </div>
+          <div class="upi-info">
+            <p class="upi-label">Scan to pay with any UPI app</p>
+            <div class="upi-id-display">
+              <span class="upi-id-text">arynmishra2007@okhdfcbank</span>
+              <button class="copy-btn" onclick="copyUpiId()" title="Copy UPI ID">
+                <i class="bi bi-clipboard"></i>
+              </button>
+            </div>
+            <p class="upi-name">Aryan Mishra</p>
+            <a href="upi://pay?pa=arynmishra2007@okhdfcbank&pn=Aryan%20Mishra&cu=INR" class="upi-pay-btn" id="upi-pay-link">
+              <i class="bi bi-phone"></i> Pay via UPI App
+            </a>
+          </div>
+        </div>
+        <div class="divider-text">OR enter your UPI ID</div>
+        <div class="form-group">
+          <label class="form-label">Your UPI ID</label>
+          <input type="text" class="form-input" id="upi-id" placeholder="yourname@upi">
+        </div>
+      </div>
+      
+      <!-- Net Banking -->
+      <div id="netbanking-details" class="hidden">
+        <div class="form-group">
+          <label class="form-label">Select Bank</label>
+          <select class="form-input" id="bank-select">
+            <option value="">Choose your bank</option>
+            <option value="sbi">State Bank of India</option>
+            <option value="hdfc">HDFC Bank</option>
+            <option value="icici">ICICI Bank</option>
+            <option value="axis">Axis Bank</option>
+            <option value="kotak">Kotak Mahindra Bank</option>
+          </select>
+        </div>
+      </div>
+      
+      <button class="btn btn-primary btn-block btn-lg mt-4" id="pay-now-btn" onclick="processPayment()">
+        <i class="bi bi-lock-fill"></i> Pay Now
+      </button>
+      
+      <p class="text-muted fs-xs text-center mt-3">
+        <i class="bi bi-shield-check"></i> Your payment is secured with 256-bit encryption
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- App Script -->
+<script src="script.js"></script>
+
+<!-- Inline init: sync welcome banner name with user display -->
+<script>
+  // Keep welcome banner in sync with the header display name
+  const _origLoadDash = window.loadDashboard;
+  window.loadDashboard = async function() {
+    await _origLoadDash();
+    const nameEl = document.getElementById('user-display-name-banner');
+    const headerName = document.getElementById('user-display-name')?.textContent || 'there';
+    if (nameEl) nameEl.textContent = headerName;
+  };
+</script>
+
+</body>
+</html>

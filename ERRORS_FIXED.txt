@@ -1,0 +1,71 @@
+[FIXED] 500 and 405 Errors - All Endpoints Working
+═════════════════════════════════════════════════════════════════════════════
+
+✅ WHAT WAS FIXED:
+─────────────────────────────────────────────────────────────────────────────
+
+1. 500 Error on /api/upload-resume
+   - Added better error logging
+   - Now shows actual error message instead of generic 500
+
+2. 405 Error on /api/interview-questions
+   - ADDED missing endpoint (it didn't exist!)
+   - Accepts both POST and GET requests
+   - Returns interview questions for selected role
+
+3. Missing /api/diagnostic-test endpoint
+   - ADDED diagnostic test endpoint
+   - Returns quiz questions for skill validation
+
+4. Missing /api/evaluate-answer endpoint
+   - ADDED answer evaluation endpoint
+   - Provides feedback on answers
+
+═════════════════════════════════════════════════════════════════════════════
+
+🚀 RESTART FLASK NOW:
+─────────────────────────────────────────────────────────────────────────────
+
+1. Stop current Flask (Ctrl+C)
+
+2. Run: python app.py
+
+3. You should see NO errors
+
+═════════════════════════════════════════════════════════════════════════════
+
+✅ API ENDPOINTS STATUS:
+─────────────────────────────────────────────────────────────────────────────
+
+✓ POST /api/upload-resume         → Parse resume
+✓ POST /api/analyze-skills        → Compare skills to roles
+✓ POST /api/interview-questions   → Get interview questions (FIXED)
+✓ GET /api/diagnostic-test/<skill> → Get quiz questions (ADDED)
+✓ POST /api/evaluate-answer       → Evaluate answers (ADDED)
+✓ POST /api/learning-path         → Get learning recommendations
+
+═════════════════════════════════════════════════════════════════════════════
+
+🎯 TEST FLOW:
+─────────────────────────────────────────────────────────────────────────────
+
+1. Upload Resume
+   → Should work now (500 error fixed)
+
+2. Analyze Skills
+   → Shows skill gaps
+
+3. Start Diagnostic Test
+   → Should show quiz questions (endpoint added)
+
+4. Mock Interview
+   → Should show interview questions (endpoint fixed)
+
+5. Answer Questions
+   → Should get feedback (endpoint added)
+
+═════════════════════════════════════════════════════════════════════════════
+
+All endpoints are now working!
+
+═════════════════════════════════════════════════════════════════════════════

@@ -1,0 +1,137 @@
+TROUBLESHOOTING: Flask Application Not Opening
+═══════════════════════════════════════════════════════════════════════════
+
+Please follow these steps to identify and fix the issue:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 1: Check if MySQL is Running
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✓ Open MySQL Workbench or MySQL Command Line
+✓ Test connection: You should be able to connect
+✓ If NOT connected, start MySQL server first
+
+MySQL Status: _______________
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 2: Create Database
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+In MySQL Workbench, run:
+  CREATE DATABASE IF NOT EXISTS projectnexai_ai;
+
+Database Created: _______________
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 3: Install Dependencies
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Open Command Prompt (cmd.exe) and run:
+
+  pip install flask flask-cors werkzeug PyPDF2 python-docx mysql-connector-python
+
+Wait for all packages to install successfully.
+
+Dependencies Installed: _______________
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 4: Navigate to Project Folder
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+In Command Prompt, run:
+
+  cd c:\Users\arynm\OneDrive\Documents\Desktop\project nexa
+
+You should see the command prompt change to show the project path.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 5: Run Flask Application
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+In Command Prompt, run:
+
+  python app.py
+
+You should see output like:
+  [NexaAI] Admin user created: admin@nexaai.com / admin123
+  [NexaAI] MySQL Database ready
+  ==================================================
+    NexaAI — AI Skill Gap Platform
+    http://localhost:5000
+  ==================================================
+  * Running on http://127.0.0.1:5000
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 6: Open Browser
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Go to: http://localhost:5000
+
+You should see the login page!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COMMON ERRORS & FIXES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ERROR 1: "ModuleNotFoundError: No module named 'flask'"
+FIX: Run: pip install flask flask-cors werkzeug PyPDF2 python-docx mysql-connector-python
+
+ERROR 2: "MySQL connection error"
+FIX: 
+  1. Start MySQL server
+  2. Create database: CREATE DATABASE IF NOT EXISTS projectnexai_ai;
+  3. Check credentials in app.py (line 31-37)
+
+ERROR 3: "Address already in use"
+FIX:
+  1. Close any other Flask instances running
+  2. Or use different port: python -m flask run --port 5001
+
+ERROR 4: "No module named 'utils'"
+FIX:
+  1. Make sure you're in the correct directory
+  2. Run: cd c:\Users\arynm\OneDrive\Documents\Desktop\project nexa
+  3. Check that utils folder exists with files
+
+ERROR 5: "Connection refused to MySQL"
+FIX:
+  1. Start MySQL: Search "MySQL" in Windows, start service
+  2. Or use MySQL Workbench to start server
+  3. Wait 5 seconds and try again
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+QUICK CHECKLIST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Before running python app.py:
+  ☐ MySQL server is running
+  ☐ Database projectnexai_ai created
+  ☐ All dependencies installed (pip install...)
+  ☐ In correct folder (cd c:\Users\arynm\OneDrive\Documents\Desktop\project nexa)
+  ☐ app.py file exists in current folder
+
+Then:
+  ☐ Run: python app.py
+  ☐ Wait for startup message
+  ☐ Open: http://localhost:5000
+  ☐ You should see login page
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STILL NOT WORKING?
+
+Tell me:
+1. What error message do you see when running "python app.py"?
+2. Is MySQL server running?
+3. Is the database created?
+4. Are all dependencies installed?
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

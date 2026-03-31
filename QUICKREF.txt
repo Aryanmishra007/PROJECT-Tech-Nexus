@@ -1,0 +1,95 @@
+╔══════════════════════════════════════════════════════════════════════════╗
+║                     NEXAAI — QUICK REFERENCE                            ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+┌─ ADMIN FEATURES ─────────────────────────────────────────────────────────┐
+│                                                                           │
+│  ✓ Admin-only section hidden from non-admin users                       │
+│  ✓ Protected analytics dashboard                                        │
+│  ✓ Role-based navigation (Admin vs Student)                            │
+│  ✓ Access validation on both frontend & backend                        │
+│                                                                           │
+│  DEFAULT ADMIN:                                                          │
+│    Email: admin@nexaai.com                                              │
+│    Password: admin123                                                   │
+│                                                                           │
+└───────────────────────────────────────────────────────────────────────────┘
+
+┌─ PAYMENT QR CODE ─────────────────────────────────────────────────────────┐
+│                                                                           │
+│  UPI Payment Method with:                                               │
+│    • QR code display (payment-qr.png)                                   │
+│    • Copy UPI ID button                                                 │
+│    • Direct UPI app link                                                │
+│    • Manual UPI entry fallback                                          │
+│                                                                           │
+│  YOUR UPI DETAILS:                                                       │
+│    UPI ID:  arynmishra2007@okhdfcbank                                   │
+│    Name:    Aryan Mishra                                                │
+│                                                                           │
+│  SETUP:                                                                  │
+│    1. Run: copy-qr.bat                                                  │
+│    2. Creates: payment-qr.png                                           │
+│    3. QR will show in UPI payment method                                │
+│                                                                           │
+└───────────────────────────────────────────────────────────────────────────┘
+
+┌─ DATABASE ───────────────────────────────────────────────────────────────┐
+│                                                                          │
+│  Type:     MySQL                                                        │
+│  Host:     127.0.0.1                                                   │
+│  Port:     3306                                                         │
+│  User:     root                                                         │
+│  Password: Aryan@2007                                                   │
+│  Database: projectnexai_ai                                             │
+│                                                                          │
+│  CREATE DATABASE IF NOT EXISTS projectnexai_ai;                        │
+│                                                                          │
+└──────────────────────────────────────────────────────────────────────────┘
+
+┌─ RUN COMMANDS ───────────────────────────────────────────────────────────┐
+│                                                                          │
+│  Install Dependencies:                                                  │
+│    pip install flask flask-cors werkzeug PyPDF2 python-docx mysql-     │
+│    connector-python                                                     │
+│                                                                          │
+│  Copy QR Code:                                                          │
+│    copy-qr.bat                                                          │
+│                                                                          │
+│  Start Application:                                                     │
+│    python app.py                                                        │
+│                                                                          │
+│  Open Browser:                                                          │
+│    http://localhost:5000                                                │
+│                                                                          │
+└──────────────────────────────────────────────────────────────────────────┘
+
+┌─ KEY ROUTES ─────────────────────────────────────────────────────────────┐
+│                                                                          │
+│  /                       → Main page                                    │
+│  /api/register          → User registration                            │
+│  /api/login             → User login                                   │
+│  /api/upload-resume     → Resume upload                                │
+│  /api/analyze-skills    → Skill gap analysis                           │
+│  /api/admin/analytics   → Admin dashboard (requires admin role)        │
+│  /api/payment/*         → Payment processing                           │
+│                                                                          │
+└──────────────────────────────────────────────────────────────────────────┘
+
+┌─ TROUBLESHOOTING ────────────────────────────────────────────────────────┐
+│                                                                          │
+│  Issue: "Admin section not showing"                                    │
+│  Fix:   Log in with admin@nexaai.com / admin123                        │
+│                                                                          │
+│  Issue: "QR code not displaying"                                       │
+│  Fix:   Run copy-qr.bat to copy image file                             │
+│                                                                          │
+│  Issue: "Database connection error"                                    │
+│  Fix:   Ensure MySQL is running and database exists                    │
+│                                                                          │
+│  Issue: "Payment modal won't open"                                     │
+│  Fix:   Make sure you're logged in as a student                        │
+│                                                                          │
+└──────────────────────────────────────────────────────────────────────────┘
+
+✅ ALL FEATURES IMPLEMENTED AND READY TO USE!
