@@ -868,32 +868,49 @@ input, textarea, select, button {
 
 /* Reset Code Display */
 .reset-code-display {
-  background: var(--surface2);
-  border: 2px dashed var(--accent);
-  border-radius: var(--radius);
-  padding: 1.25rem;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(139, 92, 246, 0.05) 100%);
+  border: 2px solid var(--accent);
+  border-radius: var(--radius-lg);
+  padding: 2rem 1.5rem;
   text-align: center;
   margin-bottom: 1.5rem;
+  box-shadow: 0 0 30px rgba(139, 92, 246, 0.2);
+  animation: pulseGlow 2s ease infinite;
 }
 
 .reset-code-label {
-  font-size: 0.8rem;
-  color: var(--muted);
+  font-size: 0.75rem;
+  color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
 }
 
 .reset-code-value {
   font-family: 'Syne', monospace;
-  font-size: 2rem;
+  font-size: 2.5rem;
   font-weight: 800;
-  letter-spacing: 0.3em;
+  letter-spacing: 0.4em;
   color: var(--accent-light);
   background: var(--gradient);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  margin-bottom: 0.5rem;
+  user-select: all;
+  cursor: pointer;
+}
+
+.reset-code-value:hover {
+  transform: scale(1.05);
+  transition: transform 0.2s ease;
+}
+
+.reset-code-hint {
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-style: italic;
 }
 
 /* Buttons - Premium Design */

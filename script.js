@@ -257,7 +257,11 @@ async function handleForgotPassword() {
 
     // Show the reset code to the user (since we don't have email)
     if (data.reset_code) {
-      showToast(`Your reset code is: ${data.reset_code}`, 'success', 10000);
+      // Display code in the UI
+      const codeDisplay = document.getElementById('display-reset-code');
+      if (codeDisplay) codeDisplay.textContent = data.reset_code;
+      
+      showToast(`Reset code generated successfully!`, 'success');
     } else {
       showToast('Reset code sent! Check your email.', 'success');
     }
