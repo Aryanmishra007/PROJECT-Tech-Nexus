@@ -170,19 +170,155 @@ async function handleRegister() {
    ══════════════════════════════════════════════════════════════ */
 
 function switchAuthTab(tab) {
-  // Hide all panels
-  ['login', 'signup', 'admin'].forEach(t => {
+  // Hide all panels and deactivate all buttons (old tabs + new pills)
+  ['login', 'signup', 'admin', 'forgot'].forEach(t => {
     const panel = document.getElementById('auth-tab-' + t);
-    const btn   = document.getElementById('tab-' + t);
-    if (panel) panel.classList.add('hidden');
-    if (btn)   btn.classList.remove('active');
+    const oldBtn = document.getElementById('tab-' + t);
+    const pillBtn = document.getElementById('pill-' + t);
+    if (panel)   panel.classList.add('hidden');
+    if (oldBtn)  oldBtn.classList.remove('active');
+    if (pillBtn) pillBtn.classList.remove('active');
   });
 
-  // Show selected panel
+  // Show selected panel and activate matching buttons
   const activePanel = document.getElementById('auth-tab-' + tab);
-  const activeBtn   = document.getElementById('tab-' + tab);
-  if (activePanel) activePanel.classList.remove('hidden');
-  if (activeBtn)   activeBtn.classList.add('active');
+  const activeOldBtn = document.getElementById('tab-' + tab);
+  const activePill  = document.getElementById('pill-' + tab);
+  if (activePanel)  activePanel.classList.remove('hidden');
+  if (activeOldBtn) activeOldBtn.classList.add('active');
+  if (activePill)   activePill.classList.add('active');
+
+  // Reset forgot password form when switching tabs
+  if (tab === 'forgot') {
+    resetForgotPasswordForm();
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   AUTH — FORGOT PASSWORD
+   ══════════════════════════════════════════════════════════════ */
+
+let forgotPasswordEmail = '';
+
+function resetForgotPasswordForm() {
+  const step1 = document.getElementById('forgot-step-1');
+  const step2 = document.getElementById('forgot-step-2');
+  if (step1) step1.classList.remove('hidden');
+  if (step2) step2.classList.add('hidden');
+  
+  // Clear inputs
+  const forgotEmail = document.getElementById('forgot-email');
+  const resetCode = document.getElementById('reset-code');
+  const resetNewPwd = document.getElementById('reset-new-password');
+  const resetConfirmPwd = document.getElementById('reset-confirm-password');
+  
+  if (forgotEmail) forgotEmail.value = '';
+  if (resetCode) resetCode.value = '';
+  if (resetNewPwd) resetNewPwd.value = '';
+  if (resetConfirmPwd) resetConfirmPwd.value = '';
+  
+  forgotPasswordEmail = '';
+}
+
+async function handleForgotPassword() {
+  const email = document.getElementById('forgot-email')?.value.trim();
+
+  if (!email) {
+    showToast('Please enter your email address', 'error');
+    return;
+  }
+  if (!isValidEmail(email)) {
+    showToast('Please enter a valid email address', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('forgot-btn');
+  setButtonLoading(btn, true, 'Sending...');
+
+  try {
+    const res = await fetch('/api/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to process request');
+    }
+
+    forgotPasswordEmail = email;
+    
+    // Show step 2
+    const step1 = document.getElementById('forgot-step-1');
+    const step2 = document.getElementById('forgot-step-2');
+    if (step1) step1.classList.add('hidden');
+    if (step2) step2.classList.remove('hidden');
+
+    // Show the reset code to the user (since we don't have email)
+    if (data.reset_code) {
+      showToast(`Your reset code is: ${data.reset_code}`, 'success', 10000);
+    } else {
+      showToast('Reset code sent! Check your email.', 'success');
+    }
+
+  } catch (err) {
+    showToast(err.message || 'Failed to send reset code', 'error');
+  } finally {
+    setButtonLoading(btn, false, '<i class="bi bi-send"></i> Send Reset Code');
+  }
+}
+
+async function handleResetPassword() {
+  const code = document.getElementById('reset-code')?.value.trim();
+  const newPassword = document.getElementById('reset-new-password')?.value;
+  const confirmPassword = document.getElementById('reset-confirm-password')?.value;
+
+  if (!code) {
+    showToast('Please enter the reset code', 'error');
+    return;
+  }
+  if (!newPassword || !confirmPassword) {
+    showToast('Please enter your new password', 'error');
+    return;
+  }
+  if (newPassword.length < 6) {
+    showToast('Password must be at least 6 characters', 'error');
+    return;
+  }
+  if (newPassword !== confirmPassword) {
+    showToast('Passwords do not match', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('reset-btn');
+  setButtonLoading(btn, true, 'Resetting...');
+
+  try {
+    const res = await fetch('/api/reset-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        email: forgotPasswordEmail,
+        reset_code: code,
+        new_password: newPassword 
+      })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to reset password');
+    }
+
+    showToast('Password reset successfully! Please sign in.', 'success');
+    resetForgotPasswordForm();
+    switchAuthTab('login');
+
+  } catch (err) {
+    showToast(err.message || 'Failed to reset password', 'error');
+  } finally {
+    setButtonLoading(btn, false, '<i class="bi bi-check-circle"></i> Reset Password');
+  }
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -336,6 +472,16 @@ async function loadDashboard() {
   
   // Show/hide admin section based on role
   updateAdminAccess(role);
+  
+  // Add pulse animation to analyze button to attract attention
+  const analyzeBtn = document.getElementById('analyze-btn');
+  if (analyzeBtn) {
+    analyzeBtn.classList.add('btn-pulse');
+    // Remove pulse after first click
+    analyzeBtn.addEventListener('click', () => {
+      analyzeBtn.classList.remove('btn-pulse');
+    }, { once: true });
+  }
 
   try {
     const res = await fetch('/api/user-stats', { credentials: 'include' });
@@ -652,8 +798,66 @@ function renderSkillChips(skills, containerId, type) {
     const chip = document.createElement('span');
     chip.className = `chip ${cls}`;
     chip.innerHTML = `<i class="bi ${icon}"></i> ${capitalize(skill)}`;
+    
+    // Make missing skill chips clickable to start diagnostic test
+    if (type === 'missing') {
+      chip.style.cursor = 'pointer';
+      chip.title = 'Click to start diagnostic test for this skill';
+      chip.addEventListener('click', () => startDiagnosticForSkill(skill));
+    }
+    
     container.appendChild(chip);
   });
+}
+
+// Start diagnostic test for a specific skill
+async function startDiagnosticForSkill(skill) {
+  if (!skill) return;
+  
+  showToast(`Starting test for: ${skill}`, 'info');
+  navToScreen('screen-diagnostic');
+  
+  const container = document.getElementById('diag-question-card');
+  if (container) {
+    container.innerHTML = '<div class="loading-overlay"><div class="spinner spinner-lg"></div></div>';
+    container.classList.remove('hidden');
+  }
+  
+  try {
+    const res = await fetch(`/api/diagnostic-test/${encodeURIComponent(skill)}`, {
+      credentials: 'include'
+    });
+    const data = await res.json();
+    
+    if (!res.ok) throw new Error(data.error || 'Failed to load questions');
+    
+    if (!data.questions || data.questions.length === 0) {
+      showToast(`No questions available for ${skill}`, 'info');
+      return;
+    }
+    
+    diagnosticQuestions = data.questions;
+    diagnosticAnswers = [];
+    diagnosticScore = 0;
+    currentQuestionIndex = 0;
+    
+    setTextContent('diagnostic-skill-name', skill);
+    
+    const resultEl = document.getElementById('diag-result');
+    if (resultEl) resultEl.classList.add('hidden');
+    
+    loadDiagnosticQuestion(0);
+  } catch (err) {
+    showToast(err.message || 'Failed to load test questions', 'error');
+    if (container) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <i class="bi bi-exclamation-circle"></i>
+          <p>Failed to load questions. Please try again.</p>
+        </div>
+      `;
+    }
+  }
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -807,6 +1011,10 @@ function showDiagnosticResults(score, total) {
     if (pct >= 75) {
       msg = 'Excellent work! You have strong knowledge of this skill.';
       cls = 'text-success';
+      // Launch confetti for high scores!
+      if (pct >= 80) {
+        launchConfetti();
+      }
     } else if (pct >= 50) {
       msg = 'Good effort! Review the topics you missed and try again.';
       cls = 'text-warning';
@@ -898,13 +1106,26 @@ function buildRoadmap(learningPath, container) {
    ══════════════════════════════════════════════════════════════ */
 
 async function loadInterviewQuestions(role) {
-  role = role || currentRole || 'ai';
+  // Get role from parameter, select dropdown, currentRole, or default to 'ai'
+  const roleSelect = document.getElementById('interview-role-select');
+  role = role || (roleSelect ? roleSelect.value : null) || currentRole || 'ai';
   currentRole = role;
+  
+  // Sync the role select dropdown
+  if (roleSelect && roleSelect.value !== role) {
+    roleSelect.value = role;
+  }
+  
   currentQuestionIndex = 0;
   interviewAnswers = [];
 
-  const questionCard = document.getElementById('interview-question-card');
-  if (questionCard) questionCard.innerHTML = '<div class="loading-overlay"><div class="spinner"></div><p class="loading-text">Preparing questions...</p></div>';
+  console.log('[Interview] Loading questions for role:', role);
+
+  // Show loading state in question text, not by replacing the whole card
+  const qText = document.getElementById('q-text');
+  const qNum = document.getElementById('q-num');
+  if (qText) qText.textContent = 'Loading questions...';
+  if (qNum) qNum.innerHTML = '<i class="bi bi-hourglass-split"></i> Preparing...';
 
   try {
     const res = await fetch('/api/interview-questions', {
@@ -913,11 +1134,24 @@ async function loadInterviewQuestions(role) {
       credentials: 'include',
       body: JSON.stringify({ role })
     });
+    
+    console.log('[Interview] API response status:', res.status);
+    
+    // Handle auth errors
+    if (res.status === 401) {
+      showToast('Please log in to access mock interviews', 'error');
+      showScreen('screen-auth');
+      return;
+    }
+    
     const data = await res.json();
+    console.log('[Interview] API response data:', data);
 
     if (!res.ok) throw new Error(data.error || 'Failed to load questions');
 
     interviewQuestions = data.questions || [];
+    console.log('[Interview] Questions loaded:', interviewQuestions.length);
+    
     if (interviewQuestions.length === 0) throw new Error('No questions available');
 
     interviewAnswers = new Array(interviewQuestions.length).fill(null);
@@ -925,12 +1159,19 @@ async function loadInterviewQuestions(role) {
     updateQProgress();
     showToast(`${interviewQuestions.length} questions loaded. Good luck!`, 'info');
   } catch (err) {
-    showToast(err.message, 'error');
-    if (questionCard) questionCard.innerHTML = `<div class="empty-state"><i class="bi bi-exclamation-circle"></i><p>${err.message}</p></div>`;
+    console.error('[Interview] Error:', err);
+    showToast(err.message || 'Could not load interview questions', 'error');
+    if (qText) qText.textContent = 'Failed to load questions. Click "New Set" to try again.';
+    if (qNum) qNum.innerHTML = '<i class="bi bi-exclamation-circle"></i> Error';
   }
 }
 
 function displayQuestion(index) {
+  if (!interviewQuestions || interviewQuestions.length === 0) {
+    console.error('[Interview] No questions loaded');
+    return;
+  }
+  
   if (index >= interviewQuestions.length) {
     showInterviewComplete();
     return;
@@ -938,13 +1179,18 @@ function displayQuestion(index) {
 
   currentQuestionIndex = index;
   const q = interviewQuestions[index];
+  
+  if (!q) {
+    console.error('[Interview] Question at index', index, 'is undefined');
+    return;
+  }
 
   const qText = document.getElementById('q-text');
   const qNum  = document.getElementById('q-num');
   const answerBox = document.getElementById('answer-box');
 
   if (qText) qText.textContent = q.question;
-  if (qNum)  qNum.textContent  = `Question ${index + 1} of ${interviewQuestions.length}`;
+  if (qNum)  qNum.innerHTML = `<i class="bi bi-question-circle"></i> Question ${index + 1} of ${interviewQuestions.length}`;
   if (answerBox) {
     answerBox.value = interviewAnswers[index] || '';
     answerBox.focus();
@@ -956,7 +1202,11 @@ function displayQuestion(index) {
 
   // Update next button text
   const nextBtn = document.getElementById('next-question-btn');
-  if (nextBtn) nextBtn.textContent = index < interviewQuestions.length - 1 ? 'Next Question' : 'Finish Interview';
+  if (nextBtn) {
+    nextBtn.innerHTML = index < interviewQuestions.length - 1 
+      ? 'Next Question <i class="bi bi-arrow-right"></i>' 
+      : 'Finish Interview <i class="bi bi-check-circle"></i>';
+  }
 
   updateQProgress();
 }
@@ -965,13 +1215,27 @@ async function submitAnswer() {
   const answerBox = document.getElementById('answer-box');
   const answer = answerBox?.value?.trim();
 
+  console.log('[Interview] Submitting answer, length:', answer?.length);
+
   if (!answer) {
     showToast('Please write an answer before submitting', 'error');
     return;
   }
 
+  // Check if questions have been loaded
+  if (!interviewQuestions || interviewQuestions.length === 0) {
+    showToast('Please load interview questions first', 'error');
+    loadInterviewQuestions(currentRole);
+    return;
+  }
+
   const question = interviewQuestions[currentQuestionIndex];
-  if (!question) return;
+  console.log('[Interview] Current question:', question);
+  
+  if (!question) {
+    showToast('No question loaded. Click "New Set" to load questions.', 'error');
+    return;
+  }
 
   // Save answer
   interviewAnswers[currentQuestionIndex] = answer;
@@ -980,6 +1244,7 @@ async function submitAnswer() {
   setButtonLoading(btn, true, 'Getting Feedback...');
 
   try {
+    console.log('[Interview] Calling /api/submit-answer');
     const res = await fetch('/api/submit-answer', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -991,16 +1256,28 @@ async function submitAnswer() {
         question_index: currentQuestionIndex
       })
     });
+    
+    console.log('[Interview] Submit response status:', res.status);
+    
+    // Handle auth errors
+    if (res.status === 401) {
+      showToast('Session expired. Please log in again.', 'error');
+      showScreen('screen-auth');
+      return;
+    }
+    
     const data = await res.json();
+    console.log('[Interview] Submit response data:', data);
 
     if (!res.ok) throw new Error(data.error || 'Feedback failed');
 
     displayFeedback(data.feedback);
     updateQProgress();
   } catch (err) {
-    showToast(err.message || 'Could not get feedback', 'error');
+    console.error('[Interview] Submit error:', err);
+    showToast(err.message || 'Could not get feedback. Check your connection.', 'error');
   } finally {
-    setButtonLoading(btn, false, 'Submit Answer');
+    setButtonLoading(btn, false, '<i class="bi bi-send-fill"></i> Submit Answer');
   }
 }
 
@@ -1314,7 +1591,7 @@ async function loadAdminAnalytics() {
    TOAST NOTIFICATIONS
    ══════════════════════════════════════════════════════════════ */
 
-function showToast(message, type = 'info') {
+function showToast(message, type = 'info', duration = 3500) {
   const container = document.getElementById('toast-container');
   if (!container) return;
 
@@ -1337,11 +1614,11 @@ function showToast(message, type = 'info') {
 
   container.appendChild(toast);
 
-  // Auto dismiss after 3.5s
+  // Auto dismiss after specified duration
   const timer = setTimeout(() => {
     toast.classList.add('hiding');
     setTimeout(() => toast.remove(), 300);
-  }, 3500);
+  }, duration);
 
   // Cancel timer on close click
   toast.querySelector('.toast-close').addEventListener('click', () => {
@@ -1444,9 +1721,8 @@ function navToScreen(screenId) {
       loadLearningPath();
       break;
     case 'screen-interview':
-      if (interviewQuestions.length === 0) {
-        loadInterviewQuestions(currentRole);
-      }
+      // Always reload questions to ensure fresh state
+      loadInterviewQuestions(currentRole);
       break;
     case 'screen-ats':
       loadATSSuggestions();
@@ -1468,7 +1744,7 @@ function navToScreen(screenId) {
    PROFILE
    ══════════════════════════════════════════════════════════════ */
 
-async function loadProfile() {
+function loadProfile() {
   if (!currentUser) return;
 
   const name  = currentUser.name  || currentUser.email?.split('@')[0] || 'User';
@@ -1492,15 +1768,66 @@ async function loadProfile() {
   set('profile-since', since);
 
   // Pull live stats
-  try {
-    const res = await fetch('/api/user-stats', { credentials: 'include' });
-    if (res.ok) {
-      const data = await res.json();
+  fetch('/api/user-stats', { credentials: 'include' })
+    .then(res => res.ok ? res.json() : Promise.reject())
+    .then(data => {
       set('profile-stat-resumes', data.resumes    ?? 0);
       set('profile-stat-skills',  data.skills     ?? 0);
       set('profile-stat-tests',   data.interviews ?? 0);
+    })
+    .catch(() => { /* leave at 0 */ });
+}
+
+/* ══════════════════════════════════════════════════════════════
+   ANIMATED COUNTERS FOR AUTH PAGE
+   ══════════════════════════════════════════════════════════════ */
+
+function animateAuthCounters() {
+  const counters = document.querySelectorAll('.counter');
+  counters.forEach(counter => {
+    const target = parseInt(counter.dataset.target) || 0;
+    const duration = 2000;
+    const start = 0;
+    const startTime = performance.now();
+
+    function updateCounter(currentTime) {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const current = Math.round(start + (target - start) * eased);
+      counter.textContent = current.toLocaleString() + '+';
+      if (progress < 1) requestAnimationFrame(updateCounter);
     }
-  } catch (_) { /* leave at 0 */ }
+
+    requestAnimationFrame(updateCounter);
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════
+   CONFETTI ANIMATION FOR TEST COMPLETION
+   ══════════════════════════════════════════════════════════════ */
+
+function launchConfetti() {
+  const colors = ['#7c3aed', '#06b6d4', '#f59e0b', '#10b981', '#ef4444'];
+  for (let i = 0; i < 80; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    el.style.cssText = `
+      position: fixed;
+      left: ${Math.random() * 100}vw;
+      top: -10px;
+      width: 10px;
+      height: 10px;
+      background: ${colors[i % colors.length]};
+      border-radius: 2px;
+      animation: confetti-fall ${2 + Math.random() * 2}s linear forwards;
+      animation-delay: ${Math.random() * 0.5}s;
+      pointer-events: none;
+      z-index: 9998;
+    `;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 5000);
+  }
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -1510,6 +1837,9 @@ async function loadProfile() {
 document.addEventListener('DOMContentLoaded', () => {
   // Check authentication state
   checkAuth();
+
+  // ── Animate counter elements on auth page ──────────────────
+  animateAuthCounters();
 
   // ── Sidebar nav item click handlers ────────────────────────
   document.querySelectorAll('.nav-item[data-screen]').forEach(item => {

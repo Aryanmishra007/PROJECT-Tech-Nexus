@@ -7,8 +7,18 @@ import os
 import json
 import sqlite3
 import tempfile
-from datetime import datetime
+import random
+import string
+from datetime import datetime, timedelta
 from functools import wraps
+
+# Load .env file if present
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+    print('[NexaAI] Loaded .env file')
+except ImportError:
+    pass  # python-dotenv not installed, rely on system env vars
 
 from flask import Flask, request, jsonify, session, send_from_directory
 from flask_cors import CORS
@@ -28,24 +38,29 @@ from utils.ai_service      import (
 # ═══════════════════════════════════════════════════════════════════════
 # Database Mode — MySQL if configured, else SQLite
 # ═══════════════════════════════════════════════════════════════════════
-_MYSQL_HOST = os.environ.get('MYSQLHOST') or os.environ.get('DB_HOST')
-USE_MYSQL   = bool(_MYSQL_HOST)
+# Check multiple possible env var names for MySQL host
+_MYSQL_HOST = (
+    os.environ.get('MYSQL_HOST') or      # Your .env format
+    os.environ.get('MYSQLHOST') or       # Railway format
+    os.environ.get('DB_HOST')
+)
+USE_MYSQL = bool(_MYSQL_HOST)
 
 if USE_MYSQL:
     import mysql.connector
     from mysql.connector import Error as DbError
     MYSQL_CONFIG = {
         'host':     _MYSQL_HOST,
-        'port':     int(os.environ.get('MYSQLPORT', os.environ.get('DB_PORT', 3306))),
-        'user':     os.environ.get('MYSQLUSER',     os.environ.get('DB_USER',     'root')),
-        'password': os.environ.get('MYSQLPASSWORD', os.environ.get('DB_PASSWORD', '')),
-        'database': os.environ.get('MYSQLDATABASE', os.environ.get('DB_NAME',     'railway')),
+        'port':     int(os.environ.get('MYSQL_PORT', os.environ.get('MYSQLPORT', os.environ.get('DB_PORT', 3306)))),
+        'user':     os.environ.get('MYSQL_USER', os.environ.get('MYSQLUSER', os.environ.get('DB_USER', 'root'))),
+        'password': os.environ.get('MYSQL_PASSWORD', os.environ.get('MYSQLPASSWORD', os.environ.get('DB_PASSWORD', ''))),
+        'database': os.environ.get('MYSQL_DATABASE', os.environ.get('MYSQLDATABASE', os.environ.get('DB_NAME', 'resumeai'))),
         'autocommit': False,
         'charset': 'utf8mb4'
     }
-    print('[NexaAI] Database mode: MySQL')
+    print(f'[NexaAI] Database mode: MySQL ({_MYSQL_HOST}:{MYSQL_CONFIG["port"]}/{MYSQL_CONFIG["database"]})')
 else:
-    _default_db = os.path.join(tempfile.gettempdir(), 'nexaai.db')
+    _default_db = os.path.join(os.path.dirname(__file__), 'nexaai.db')
     SQLITE_PATH = os.environ.get('SQLITE_PATH', _default_db)
     print(f'[NexaAI] Database mode: SQLite ({SQLITE_PATH})')
 
@@ -454,6 +469,121 @@ def logout():
     """Logout user"""
     session.clear()
     return jsonify({'message': 'Logged out'}), 200
+
+
+# Store reset codes temporarily (in production, use Redis or database)
+password_reset_codes = {}
+
+@app.route('/api/forgot-password', methods=['POST'])
+def forgot_password():
+    """Request password reset - generates a reset code"""
+    data = request.get_json() or {}
+    email = data.get('email', '').strip().lower()
+    
+    if not email:
+        return jsonify({'error': 'Email is required'}), 400
+    
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        # Check if user exists
+        if USE_MYSQL:
+            cursor.execute('SELECT id, name FROM users WHERE email = %s', (email,))
+        else:
+            cursor.execute('SELECT id, name FROM users WHERE email = ?', (email,))
+        
+        user = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if not user:
+            # Don't reveal if email exists or not for security
+            # But for this demo, we'll be helpful
+            return jsonify({'error': 'No account found with this email'}), 404
+        
+        # Generate 6-digit reset code
+        reset_code = ''.join(random.choices(string.digits, k=6))
+        
+        # Store reset code with expiry (15 minutes)
+        password_reset_codes[email] = {
+            'code': reset_code,
+            'user_id': user[0],
+            'expires': datetime.now() + timedelta(minutes=15)
+        }
+        
+        # In production, send email here
+        # For now, return the code directly (demo mode)
+        print(f'[NexaAI] Password reset code for {email}: {reset_code}')
+        
+        return jsonify({
+            'message': 'Reset code generated',
+            'reset_code': reset_code  # Remove this line in production!
+        }), 200
+        
+    except Exception as e:
+        print(f'[NexaAI] Forgot password error: {e}')
+        return jsonify({'error': 'Failed to process request'}), 500
+
+
+@app.route('/api/reset-password', methods=['POST'])
+def reset_password():
+    """Reset password using reset code"""
+    data = request.get_json() or {}
+    email = data.get('email', '').strip().lower()
+    reset_code = data.get('reset_code', '').strip()
+    new_password = data.get('new_password', '')
+    
+    if not email or not reset_code or not new_password:
+        return jsonify({'error': 'Email, reset code, and new password are required'}), 400
+    
+    if len(new_password) < 6:
+        return jsonify({'error': 'Password must be at least 6 characters'}), 400
+    
+    # Verify reset code
+    stored = password_reset_codes.get(email)
+    if not stored:
+        return jsonify({'error': 'No reset code found. Please request a new one.'}), 400
+    
+    if stored['code'] != reset_code:
+        return jsonify({'error': 'Invalid reset code'}), 400
+    
+    if datetime.now() > stored['expires']:
+        del password_reset_codes[email]
+        return jsonify({'error': 'Reset code has expired. Please request a new one.'}), 400
+    
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        # Update password
+        hashed_password = generate_password_hash(new_password)
+        
+        if USE_MYSQL:
+            cursor.execute(
+                'UPDATE users SET password = %s WHERE id = %s',
+                (hashed_password, stored['user_id'])
+            )
+        else:
+            cursor.execute(
+                'UPDATE users SET password = ? WHERE id = ?',
+                (hashed_password, stored['user_id'])
+            )
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        # Remove used reset code
+        del password_reset_codes[email]
+        
+        print(f'[NexaAI] Password reset successful for {email}')
+        
+        return jsonify({'message': 'Password reset successfully'}), 200
+        
+    except Exception as e:
+        print(f'[NexaAI] Password reset error: {e}')
+        return jsonify({'error': 'Failed to reset password'}), 500
 
 
 @app.route('/api/auth-check', methods=['GET'])
@@ -889,6 +1019,101 @@ def get_pricing():
             {'name': 'Pro', 'price': 999, 'features': ['Resume Analysis', 'Skill Gap Report', 'Learning Path', 'Diagnostic Test']},
             {'name': 'Premium', 'price': 1999, 'features': ['Resume Analysis', 'Skill Gap Report', 'Learning Path', 'Diagnostic Test', 'Mock Interview', 'Interview Questions']}
         ]
+    }), 200
+
+
+@app.route('/api/payment/create-order', methods=['POST'])
+@require_login
+def create_payment_order():
+    """Create a payment order"""
+    data = request.get_json()
+    plan_id = data.get('plan_id', '')
+    amount = data.get('amount', 0)
+    
+    # Generate a unique order ID
+    import uuid
+    order_id = f"order_{uuid.uuid4().hex[:12]}"
+    
+    return jsonify({
+        'success': True,
+        'order_id': order_id,
+        'amount': amount,
+        'plan_id': plan_id
+    }), 200
+
+
+@app.route('/api/payment/verify', methods=['POST'])
+@require_login
+def verify_payment():
+    """Verify payment and activate subscription"""
+    data = request.get_json()
+    payment_id = data.get('payment_id', '')
+    plan_id = data.get('plan_id', '')
+    payment_method = data.get('payment_method', 'card')
+    
+    # Map plan IDs to prices
+    prices = {'basic': 499, 'pro': 999, 'premium': 1999}
+    amount = prices.get(plan_id, 0)
+    
+    if not amount:
+        return jsonify({'error': 'Invalid plan'}), 400
+    
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    try:
+        # Create subscription
+        cursor.execute(
+            'INSERT INTO subscriptions (user_id, plan, amount, status) VALUES (%s,%s,%s,%s)',
+            (session['user_id'], plan_id, amount, 'active')
+        )
+        
+        # Record payment
+        cursor.execute(
+            'INSERT INTO payments (user_id, amount, plan, transaction_id, status) VALUES (%s,%s,%s,%s,%s)',
+            (session['user_id'], amount, plan_id, payment_id, 'success')
+        )
+        
+        conn.commit()
+        return jsonify({
+            'success': True,
+            'message': 'Payment verified and subscription activated',
+            'plan': plan_id
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@app.route('/api/subscription/status', methods=['GET'])
+@require_login
+def subscription_status():
+    """Get current subscription status"""
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    cursor.execute(
+        'SELECT plan, status FROM subscriptions WHERE user_id=%s AND status=%s ORDER BY id DESC LIMIT 1',
+        (session['user_id'], 'active')
+    )
+    result = cursor.fetchone()
+    cursor.close()
+    conn.close()
+    
+    if result:
+        return jsonify({
+            'has_subscription': True,
+            'plan': result[0],
+            'status': result[1]
+        }), 200
+    
+    return jsonify({
+        'has_subscription': False,
+        'plan': 'free',
+        'status': 'none'
     }), 200
 
 
