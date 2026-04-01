@@ -396,7 +396,7 @@ def login():
     data = request.get_json()
     
     if not data.get('email') or not data.get('password'):
-        return jsonify({'error': 'Missing email or password'}), 400
+        return jsonify({'error': 'Please enter both email and password'}), 400
     
     conn = get_db()
     if not conn:
@@ -409,12 +409,12 @@ def login():
         user = cursor.fetchone()
         
         if not user:
-            return jsonify({'error': 'Invalid email or password'}), 401
+            return jsonify({'error': 'No account found with this email address'}), 401
         
         user_id, name, email, password_hash, role = user[0], user[1], user[2], user[3], user[4]
         
         if not check_password_hash(password_hash, data['password']):
-            return jsonify({'error': 'Invalid email or password'}), 401
+            return jsonify({'error': 'Incorrect password. Please try again or use "Forgot password?"'}), 401
         
         # Set session
         session['user_id'] = user_id
@@ -434,7 +434,7 @@ def login():
     
     except Exception as e:
         print(f'[ERROR] Login error: {e}')
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'Login failed. Please try again'}), 500
     
     finally:
         cursor.close()

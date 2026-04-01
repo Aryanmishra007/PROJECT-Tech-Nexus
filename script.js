@@ -154,12 +154,21 @@ async function handleRegister() {
     }
 
     currentUser = data.user || { name, email };
+    
+    // Clear registration form
+    document.getElementById('reg-name').value = '';
+    document.getElementById('reg-email').value = '';
+    document.getElementById('reg-password').value = '';
+    document.getElementById('reg-confirm').value = '';
+    
     showToast(`Welcome to NexaAI, ${name}!`, 'success');
+    
+    // Hide auth page and show dashboard
     showPage('app-page');
     loadDashboard();
     showScreen('screen-dashboard');
   } catch (err) {
-    showToast(err.message || 'Registration failed. Please try again.', 'error');
+    showToast(err.message || 'Registration failed. Please try again.', 'error', 5000);
   } finally {
     setButtonLoading(btn, false, 'Create Account');
   }
@@ -408,12 +417,20 @@ async function handleLogin() {
     }
 
     currentUser = data.user || { email };
+    
+    // Clear login form
+    document.getElementById('login-email').value = '';
+    document.getElementById('login-password').value = '';
+    
     showToast('Welcome back!', 'success');
+    
+    // Hide auth page and show dashboard
     showPage('app-page');
     loadDashboard();
     showScreen('screen-dashboard');
   } catch (err) {
-    showToast(err.message || 'Invalid email or password.', 'error');
+    // Show clear error message to user
+    showToast(err.message || 'Invalid email or password.', 'error', 5000);
   } finally {
     setButtonLoading(btn, false, 'Sign In');
   }
