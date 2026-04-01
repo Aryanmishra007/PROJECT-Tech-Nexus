@@ -16,6 +16,9 @@
   <!-- Bootstrap 5 Grid (utilities only) -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
 
+  <!-- Stripe.js -->
+  <script src="https://js.stripe.com/v3/"></script>
+
   <!-- App Stylesheet -->
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -1303,25 +1306,22 @@
         </div>
       </div>
       
-      <!-- Card Details -->
+      <!-- Card Details with Stripe Element -->
       <div id="card-details">
         <div class="form-group">
-          <label class="form-label">Card Number</label>
-          <input type="text" class="form-input" id="card-number" placeholder="1234 5678 9012 3456" maxlength="19">
-        </div>
-        <div class="row g-3">
-          <div class="col-6">
-            <label class="form-label">Expiry Date</label>
-            <input type="text" class="form-input" id="card-expiry" placeholder="MM/YY" maxlength="5">
+          <label class="form-label">Card Details</label>
+          <div id="stripe-card-element" class="stripe-card-input">
+            <!-- Stripe Card Element will be inserted here -->
           </div>
-          <div class="col-6">
-            <label class="form-label">CVV</label>
-            <input type="password" class="form-input" id="card-cvv" placeholder="***" maxlength="4">
-          </div>
+          <div id="card-errors" class="text-danger small mt-2"></div>
         </div>
-        <div class="form-group">
-          <label class="form-label">Name on Card</label>
-          <input type="text" class="form-input" id="card-name" placeholder="ARYAN MISHRA">
+        
+        <div class="stripe-test-info">
+          <i class="bi bi-info-circle"></i>
+          <div>
+            <strong>Test Mode:</strong> Use card <code>4242 4242 4242 4242</code><br>
+            Any future date, any 3-digit CVV
+          </div>
         </div>
       </div>
       

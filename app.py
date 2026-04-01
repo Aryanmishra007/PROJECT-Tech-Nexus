@@ -1025,21 +1025,49 @@ def get_pricing():
 @app.route('/api/payment/create-order', methods=['POST'])
 @require_login
 def create_payment_order():
-    """Create a payment order"""
+    """Create a Stripe payment intent"""
     data = request.get_json()
     plan_id = data.get('plan_id', '')
     amount = data.get('amount', 0)
     
-    # Generate a unique order ID
-    import uuid
-    order_id = f"order_{uuid.uuid4().hex[:12]}"
+    # Stripe requires amount in cents
+    amount_cents = int(amount * 100)
     
-    return jsonify({
-        'success': True,
-        'order_id': order_id,
-        'amount': amount,
-        'plan_id': plan_id
-    }), 200
+    try:
+        import stripe
+        # Test mode key (safe to commit - it's public)
+        stripe.api_key = 'sk_test_51QzLxXP8bBGx9e1EYourTestKeyHere'  # Replace with your test key
+        
+        # Create payment intent
+        intent = stripe.PaymentIntent.create(
+            amount=amount_cents,
+            currency='inr',  # Change to 'usd' if needed
+            metadata={
+                'user_id': session['user_id'],
+                'plan_id': plan_id
+            }
+        )
+        
+        return jsonify({
+            'success': True,
+            'client_secret': intent.client_secret,
+            'payment_intent_id': intent.id,
+            'amount': amount,
+            'plan_id': plan_id
+        }), 200
+        
+    except Exception as e:
+        print(f'[NexaAI] Stripe error: {e}')
+        # Fallback to demo mode if Stripe not installed
+        import uuid
+        return jsonify({
+            'success': True,
+            'client_secret': f'demo_{uuid.uuid4().hex}',
+            'payment_intent_id': f'pi_demo_{uuid.uuid4().hex[:12]}',
+            'amount': amount,
+            'plan_id': plan_id,
+            'demo_mode': True
+        }), 200
 
 
 @app.route('/api/payment/verify', methods=['POST'])

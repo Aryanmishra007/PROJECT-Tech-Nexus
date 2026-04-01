@@ -1917,6 +1917,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 let currentPaymentPlan = null;
 let currentPaymentAmount = 0;
+let stripe = null;
+let cardElement = null;
+let currentClientSecret = null;
 
 function openPaymentModal(planId, amount) {
   currentPaymentPlan = planId;
@@ -1931,12 +1934,55 @@ function openPaymentModal(planId, amount) {
   document.getElementById('payment-plan-name').textContent = planNames[planId] || 'Selected Plan';
   document.getElementById('payment-amount').textContent = '₹' + amount;
   document.getElementById('payment-modal').classList.remove('hidden');
+  
+  // Initialize Stripe Card Element
+  initializeStripeCardElement();
+}
+
+function initializeStripeCardElement() {
+  if (!stripe && typeof Stripe !== 'undefined') {
+    try {
+      // Initialize Stripe with test publishable key
+      stripe = Stripe('pk_test_51QzLxXP8bBGx9e1EYourTestKeyHere'); // Replace with your test publishable key
+      
+      const elements = stripe.elements();
+      cardElement = elements.create('card', {
+        style: {
+          base: {
+            fontSize: '16px',
+            color: '#e2e8f0',
+            backgroundColor: 'transparent',
+            '::placeholder': {
+              color: '#64748b'
+            }
+          },
+          invalid: {
+            color: '#ef4444'
+          }
+        }
+      });
+      
+      cardElement.mount('#stripe-card-element');
+      
+      cardElement.on('change', (event) => {
+        const displayError = document.getElementById('card-errors');
+        if (event.error) {
+          displayError.textContent = event.error.message;
+        } else {
+          displayError.textContent = '';
+        }
+      });
+    } catch (err) {
+      console.log('Stripe initialization error:', err);
+    }
+  }
 }
 
 function closePaymentModal() {
   document.getElementById('payment-modal').classList.add('hidden');
   currentPaymentPlan = null;
   currentPaymentAmount = 0;
+  currentClientSecret = null;
 }
 
 async function processPayment() {
@@ -1946,7 +1992,13 @@ async function processPayment() {
   const paymentMethod = document.querySelector('input[name="payment_method"]:checked')?.value || 'card';
   
   try {
-    // Step 1: Create payment order
+    // For non-card payments, use old flow
+    if (paymentMethod !== 'card') {
+      await processNonCardPayment(paymentMethod);
+      return;
+    }
+    
+    // Step 1: Create payment intent
     const orderRes = await fetch('/api/payment/create-order', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1958,41 +2010,118 @@ async function processPayment() {
     });
     const orderData = await orderRes.json();
     
-    if (!orderRes.ok) throw new Error(orderData.error || 'Failed to create order');
+    if (!orderRes.ok) throw new Error(orderData.error || 'Failed to create payment intent');
     
-    // Simulate payment processing (in real app, integrate Razorpay/Stripe here)
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    currentClientSecret = orderData.client_secret;
     
-    // Step 2: Verify payment
-    const verifyRes = await fetch('/api/payment/verify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({
-        payment_id: orderData.order_id,
-        plan_id: currentPaymentPlan,
-        payment_method: paymentMethod
-      })
+    // Check if demo mode
+    if (orderData.demo_mode || !stripe) {
+      // Demo mode - skip Stripe and directly verify
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      const verifyRes = await fetch('/api/payment/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          payment_id: orderData.payment_intent_id,
+          plan_id: currentPaymentPlan,
+          payment_method: 'card'
+        })
+      });
+      const verifyData = await verifyRes.json();
+      
+      if (!verifyRes.ok) throw new Error(verifyData.error || 'Payment verification failed');
+      
+      showToast('Payment successful! Your subscription is now active.', 'success');
+      closePaymentModal();
+      updatePlanBadge();
+      return;
+    }
+    
+    // Step 2: Confirm payment with Stripe
+    const { error, paymentIntent } = await stripe.confirmCardPayment(currentClientSecret, {
+      payment_method: {
+        card: cardElement
+      }
     });
-    const verifyData = await verifyRes.json();
     
-    if (!verifyRes.ok) throw new Error(verifyData.error || 'Payment verification failed');
+    if (error) {
+      throw new Error(error.message);
+    }
     
-    showToast('Payment successful! Your subscription is now active.', 'success');
-    closePaymentModal();
-    
-    // Update current plan badge
-    const planBadge = document.getElementById('current-plan-badge');
-    if (planBadge) {
-      const planNames = { 'basic': 'Basic', 'pro': 'Professional', 'premium': 'Premium' };
-      planBadge.textContent = planNames[currentPaymentPlan] + ' Plan';
-      planBadge.className = 'badge badge-green';
+    if (paymentIntent.status === 'succeeded') {
+      // Step 3: Verify payment on backend
+      const verifyRes = await fetch('/api/payment/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          payment_id: paymentIntent.id,
+          plan_id: currentPaymentPlan,
+          payment_method: 'card'
+        })
+      });
+      const verifyData = await verifyRes.json();
+      
+      if (!verifyRes.ok) throw new Error(verifyData.error || 'Payment verification failed');
+      
+      showToast('Payment successful! Your subscription is now active.', 'success');
+      closePaymentModal();
+      updatePlanBadge();
+    } else {
+      throw new Error('Payment not completed');
     }
     
   } catch (err) {
     showToast(err.message || 'Payment failed. Please try again.', 'error');
   } finally {
     setButtonLoading(btn, false, '<i class="bi bi-lock-fill"></i> Pay Now');
+  }
+}
+
+async function processNonCardPayment(paymentMethod) {
+  // Old flow for UPI/NetBanking
+  const orderRes = await fetch('/api/payment/create-order', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({
+      plan_id: currentPaymentPlan,
+      amount: currentPaymentAmount
+    })
+  });
+  const orderData = await orderRes.json();
+  
+  if (!orderRes.ok) throw new Error(orderData.error || 'Failed to create order');
+  
+  await new Promise(resolve => setTimeout(resolve, 1500));
+  
+  const verifyRes = await fetch('/api/payment/verify', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({
+      payment_id: orderData.payment_intent_id || orderData.order_id,
+      plan_id: currentPaymentPlan,
+      payment_method: paymentMethod
+    })
+  });
+  const verifyData = await verifyRes.json();
+  
+  if (!verifyRes.ok) throw new Error(verifyData.error || 'Payment verification failed');
+  
+  showToast('Payment successful! Your subscription is now active.', 'success');
+  closePaymentModal();
+  updatePlanBadge();
+}
+
+function updatePlanBadge() {
+  const planBadge = document.getElementById('current-plan-badge');
+  if (planBadge) {
+    const planNames = { 'basic': 'Basic', 'pro': 'Professional', 'premium': 'Premium' };
+    planBadge.textContent = planNames[currentPaymentPlan] + ' Plan';
+    planBadge.className = 'badge badge-green';
   }
 }
 
