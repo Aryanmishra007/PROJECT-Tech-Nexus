@@ -430,7 +430,9 @@ async function handleLogin() {
     showScreen('screen-dashboard');
   } catch (err) {
     // Show clear error message to user
-    showToast(err.message || 'Invalid email or password.', 'error', 5000);
+    const errorMsg = err.message || 'Invalid email or password.';
+    console.log('[Login Error]', errorMsg);
+    showToast(errorMsg, 'error', 5000);
   } finally {
     setButtonLoading(btn, false, 'Sign In');
   }
@@ -1614,7 +1616,11 @@ async function loadAdminAnalytics() {
 
 function showToast(message, type = 'info', duration = 3500) {
   const container = document.getElementById('toast-container');
-  if (!container) return;
+  if (!container) {
+    console.error('Toast container not found!');
+    alert(message); // Fallback to alert if container missing
+    return;
+  }
 
   const iconMap = {
     success: 'bi-check-circle-fill',
@@ -1634,6 +1640,8 @@ function showToast(message, type = 'info', duration = 3500) {
   `;
 
   container.appendChild(toast);
+  
+  console.log('[Toast]', type, message);
 
   // Auto dismiss after specified duration
   const timer = setTimeout(() => {
