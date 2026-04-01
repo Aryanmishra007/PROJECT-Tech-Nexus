@@ -163,7 +163,13 @@ async function handleRegister() {
     
     showToast(`Welcome to NexaAI, ${name}!`, 'success');
     
-    // Hide auth page and show dashboard
+    // Hide auth page COMPLETELY and show dashboard
+    const authPage = document.getElementById('auth-page');
+    if (authPage) {
+      authPage.classList.remove('active');
+      authPage.style.display = 'none';
+    }
+    
     showPage('app-page');
     loadDashboard();
     showScreen('screen-dashboard');
@@ -424,7 +430,13 @@ async function handleLogin() {
     
     showToast('Welcome back!', 'success');
     
-    // Hide auth page and show dashboard
+    // Hide auth page COMPLETELY and show dashboard
+    const authPage = document.getElementById('auth-page');
+    if (authPage) {
+      authPage.classList.remove('active');
+      authPage.style.display = 'none';
+    }
+    
     showPage('app-page');
     loadDashboard();
     showScreen('screen-dashboard');
@@ -449,6 +461,13 @@ async function logout() {
   interviewQuestions = [];
   diagnosticQuestions = [];
   showToast('You have been logged out', 'info');
+  
+  // Show auth page again
+  const authPage = document.getElementById('auth-page');
+  if (authPage) {
+    authPage.style.display = '';  // Reset display style
+  }
+  
   showPage('auth-page');
   switchAuthTab('login');
 }
@@ -461,14 +480,32 @@ async function checkAuth() {
     if (res.ok) {
       const data = await res.json();
       currentUser = data.user;
+      
+      // Hide auth page COMPLETELY when already logged in
+      const authPage = document.getElementById('auth-page');
+      if (authPage) {
+        authPage.classList.remove('active');
+        authPage.style.display = 'none';
+      }
+      
       showPage('app-page');
       loadDashboard();
       showScreen('screen-dashboard');
     } else {
+      // Show auth page
+      const authPage = document.getElementById('auth-page');
+      if (authPage) {
+        authPage.style.display = '';
+      }
       showPage('auth-page');
       switchAuthTab('login');
     }
   } catch (_) {
+    // Show auth page
+    const authPage = document.getElementById('auth-page');
+    if (authPage) {
+      authPage.style.display = '';
+    }
     showPage('auth-page');
     switchAuthTab('login');
   }
