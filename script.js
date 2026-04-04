@@ -789,6 +789,19 @@ function displayUploadResults(data) {
    SKILL ANALYSIS DISPLAY
    ══════════════════════════════════════════════════════════════ */
 
+async function loadLastSkillAnalysis() {
+  try {
+    const res = await fetch('/api/last-analysis', { credentials: 'include' });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.analysis) {
+        currentAnalysis = data.analysis;
+        displaySkillAnalysis(data.analysis);
+      }
+    }
+  } catch (_) {}
+}
+
 function displaySkillAnalysis(analysis) {
   if (!analysis) return;
 
@@ -844,6 +857,9 @@ function displaySkillAnalysis(analysis) {
   setTextContent('count-have',     (analysis.skills_matched  || []).length);
   setTextContent('count-missing',  (analysis.skills_missing  || []).length);
   setTextContent('count-priority', (analysis.skills_priority || []).length);
+
+  // Show DeepTech insights
+  showDeepTechInsights(analysis);
 }
 
 function setProgressBar(id, pct) {
@@ -885,6 +901,212 @@ function renderSkillChips(skills, containerId, type) {
     
     container.appendChild(chip);
   });
+}
+
+/* ── DeepTech Insights ──────────────────────────────────── */
+
+const SALARY_DATA = {
+  ai:           { low: '₹8L', high: '₹35L', entry: 8, mid: 18, senior: 35 },
+  data_analyst: { low: '₹5L', high: '₹22L', entry: 5, mid: 12, senior: 22 },
+  web_developer:{ low: '₹4L', high: '₹25L', entry: 4, mid: 12, senior: 25 },
+  ml_engineer:  { low: '₹10L', high: '₹40L', entry: 10, mid: 22, senior: 40 },
+  devops:       { low: '₹7L', high: '₹30L', entry: 7, mid: 16, senior: 30 },
+};
+
+const CERTS_DATA = {
+  ai: [
+    { name: 'TensorFlow Developer Certificate', provider: 'Google', skill: 'TensorFlow', tag: 'Paid', color: 'feat-amber', icon: 'bi-cpu-fill' },
+    { name: 'AWS Machine Learning Specialty', provider: 'Amazon', skill: 'AWS + ML', tag: 'Paid', color: 'feat-cyan', icon: 'bi-cloud-fill' },
+    { name: 'Deep Learning Specialization', provider: 'Coursera / DeepLearning.AI', skill: 'Deep Learning', tag: 'Paid', color: 'feat-purple', icon: 'bi-diagram-3-fill' },
+    { name: 'Hugging Face NLP Course', provider: 'Hugging Face', skill: 'LLM / NLP', tag: 'Free', color: 'feat-green', icon: 'bi-chat-dots-fill' },
+  ],
+  data_analyst: [
+    { name: 'Google Data Analytics Certificate', provider: 'Google / Coursera', skill: 'SQL + Tableau', tag: 'Paid', color: 'feat-cyan', icon: 'bi-bar-chart-fill' },
+    { name: 'Microsoft Power BI Data Analyst', provider: 'Microsoft', skill: 'Power BI', tag: 'Paid', color: 'feat-amber', icon: 'bi-grid-fill' },
+    { name: 'Tableau Desktop Specialist', provider: 'Tableau', skill: 'Tableau', tag: 'Paid', color: 'feat-purple', icon: 'bi-pie-chart-fill' },
+    { name: 'IBM Data Science Certificate', provider: 'IBM / Coursera', skill: 'Python + ML', tag: 'Paid', color: 'feat-green', icon: 'bi-database-fill' },
+  ],
+  web_developer: [
+    { name: 'Meta Front-End Developer', provider: 'Meta / Coursera', skill: 'React + HTML/CSS', tag: 'Paid', color: 'feat-cyan', icon: 'bi-code-slash' },
+    { name: 'AWS Certified Developer', provider: 'Amazon', skill: 'Cloud + APIs', tag: 'Paid', color: 'feat-amber', icon: 'bi-cloud-fill' },
+    { name: 'freeCodeCamp Full Stack', provider: 'freeCodeCamp', skill: 'Full Stack', tag: 'Free', color: 'feat-green', icon: 'bi-laptop-fill' },
+    { name: 'MongoDB Node.js Developer', provider: 'MongoDB University', skill: 'MongoDB + Node', tag: 'Free', color: 'feat-purple', icon: 'bi-server' },
+  ],
+  ml_engineer: [
+    { name: 'MLOps Specialization', provider: 'DeepLearning.AI / Coursera', skill: 'MLOps', tag: 'Paid', color: 'feat-purple', icon: 'bi-gear-fill' },
+    { name: 'AWS ML Specialty', provider: 'Amazon', skill: 'AWS MLOps', tag: 'Paid', color: 'feat-cyan', icon: 'bi-cloud-fill' },
+    { name: 'Kubernetes Application Developer', provider: 'CNCF', skill: 'Kubernetes', tag: 'Paid', color: 'feat-amber', icon: 'bi-boxes' },
+    { name: 'Airflow Fundamentals', provider: 'Astronomer', skill: 'Airflow', tag: 'Free', color: 'feat-green', icon: 'bi-wind' },
+  ],
+  devops: [
+    { name: 'CKA – Certified Kubernetes Admin', provider: 'CNCF / Linux Foundation', skill: 'Kubernetes', tag: 'Paid', color: 'feat-amber', icon: 'bi-boxes' },
+    { name: 'AWS Solutions Architect', provider: 'Amazon', skill: 'AWS + Cloud', tag: 'Paid', color: 'feat-cyan', icon: 'bi-cloud-fill' },
+    { name: 'HashiCorp Terraform Associate', provider: 'HashiCorp', skill: 'Terraform', tag: 'Paid', color: 'feat-purple', icon: 'bi-bricks' },
+    { name: 'GitHub Actions Certification', provider: 'GitHub', skill: 'CI/CD', tag: 'Free', color: 'feat-green', icon: 'bi-github' },
+  ],
+};
+
+const HOT_SKILLS = new Set([
+  'llm', 'generative ai', 'rag', 'fine-tuning', 'prompt engineering',
+  'mlops', 'kubernetes', 'terraform', 'rust', 'typescript',
+  'react', 'next.js', 'fastapi', 'pytorch', 'huggingface',
+]);
+
+function showDeepTechInsights(analysis) {
+  const role = analysis.role_key || 'ai';
+  const score = analysis.overall_score || 0;
+
+  // Show containers
+  const insightsRow = document.getElementById('dt-insights');
+  const certsSection = document.getElementById('dt-certs-section');
+  if (insightsRow) insightsRow.style.display = 'grid';
+  if (certsSection) certsSection.style.display = 'block';
+
+  // ── Salary Insights ──────────────────────────────────────
+  const sal = SALARY_DATA[role] || SALARY_DATA.ai;
+  const salLow  = document.getElementById('dt-sal-low');
+  const salHigh = document.getElementById('dt-sal-high');
+  const salFill = document.getElementById('dt-sal-fill');
+  const salMark = document.getElementById('dt-sal-marker');
+  const salLabel= document.getElementById('dt-sal-label');
+  if (salLow)  salLow.textContent  = sal.low;
+  if (salHigh) salHigh.textContent = sal.high;
+  // score position on bar
+  const barPct = Math.min(95, Math.max(5, score));
+  if (salFill) setTimeout(() => { salFill.style.width = barPct + '%'; }, 200);
+  if (salMark) setTimeout(() => { salMark.style.left = barPct + '%'; }, 200);
+  // Estimated CTC
+  const range = sal.senior - sal.entry;
+  const estCTC = Math.round(sal.entry + (score / 100) * range);
+  if (salLabel) salLabel.textContent = `Est. CTC: ₹${estCTC}L/yr based on your ${score}% match`;
+
+  // ── Time to Job-Ready ────────────────────────────────────
+  const timeVal  = document.getElementById('dt-time-val');
+  const timeUnit = document.getElementById('dt-time-unit');
+  const timeBreak= document.getElementById('dt-time-breakdown');
+  const missingCount = (analysis.skills_missing || []).length;
+  const weeks = score >= 80 ? Math.max(2, Math.round((100 - score) / 10))
+              : score >= 60 ? Math.round(missingCount * 1.5)
+              : score >= 40 ? Math.round(missingCount * 2.5)
+              : Math.round(missingCount * 4);
+  if (timeVal)  timeVal.textContent  = weeks;
+  if (timeUnit) timeUnit.textContent = weeks === 1 ? 'week' : 'weeks';
+  if (timeBreak) {
+    const prio = (analysis.skills_priority || []).slice(0, 3);
+    timeBreak.innerHTML = prio.length
+      ? `Focus areas: <strong>${prio.map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(', ')}</strong>`
+      : 'Keep practicing your existing skills';
+  }
+
+  // ── Interview Readiness ──────────────────────────────────
+  const meterFill   = document.getElementById('dt-meter-fill');
+  const readinessPct= document.getElementById('dt-readiness-pct');
+  const verdict     = document.getElementById('dt-readiness-verdict');
+  const readyScore  = Math.min(100, score + 5);
+  if (meterFill)    setTimeout(() => { meterFill.style.width = readyScore + '%'; }, 300);
+  if (readinessPct) readinessPct.textContent = readyScore + '%';
+  if (verdict) {
+    if (readyScore >= 80) {
+      verdict.textContent = '✅ Ready to apply now';
+      verdict.className = 'dt-readiness-verdict verdict-ready';
+    } else if (readyScore >= 65) {
+      verdict.textContent = '⚡ Almost there — fill priority gaps';
+      verdict.className = 'dt-readiness-verdict verdict-almost';
+    } else if (readyScore >= 45) {
+      verdict.textContent = '📚 Keep learning — making progress';
+      verdict.className = 'dt-readiness-verdict verdict-preparing';
+    } else {
+      verdict.textContent = '🚀 Early stage — build fundamentals first';
+      verdict.className = 'dt-readiness-verdict verdict-early';
+    }
+  }
+
+  // ── Certifications ───────────────────────────────────────
+  const certsGrid = document.getElementById('dt-certs-grid');
+  const certs = CERTS_DATA[role] || CERTS_DATA.ai;
+  if (certsGrid) {
+    certsGrid.innerHTML = certs.map(c => `
+      <div class="dt-cert-card">
+        <div class="dt-cert-icon ${c.color}"><i class="bi ${c.icon}"></i></div>
+        <div class="dt-cert-body">
+          <h5>${c.name}</h5>
+          <p>${c.provider} · ${c.skill}</p>
+          <span class="dt-cert-tag ${c.tag === 'Free' ? 'cert-free' : 'cert-paid'}">${c.tag}</span>
+        </div>
+      </div>
+    `).join('');
+  }
+}
+
+/* ── GitHub Skill Import ────────────────────────────────── */
+async function importGitHubSkills() {
+  const input = document.getElementById('dt-github-input');
+  const username = input?.value.trim();
+  if (!username) {
+    showToast('Enter your GitHub username', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('dt-github-btn');
+  setButtonLoading(btn, true, 'Importing...');
+
+  try {
+    const res = await fetch(`https://api.github.com/users/${encodeURIComponent(username)}/repos?per_page=30&sort=updated`);
+    if (!res.ok) throw new Error('GitHub user not found');
+    const repos = await res.json();
+
+    // Extract languages
+    const langMap = {};
+    repos.forEach(r => { if (r.language) langMap[r.language] = (langMap[r.language] || 0) + 1; });
+
+    // Map to skills
+    const LANG_TO_SKILL = {
+      'Python': 'Python', 'JavaScript': 'JavaScript', 'TypeScript': 'TypeScript',
+      'Java': 'Java', 'Go': 'Go', 'Rust': 'Rust', 'C++': 'C++',
+      'C#': 'C#', 'Ruby': 'Ruby', 'PHP': 'PHP', 'Swift': 'Swift',
+      'Kotlin': 'Kotlin', 'R': 'R', 'Scala': 'Scala', 'Shell': 'Bash',
+      'Dockerfile': 'Docker', 'HTML': 'HTML', 'CSS': 'CSS', 'Vue': 'Vue.js',
+      'Jupyter Notebook': 'Machine Learning',
+    };
+
+    const detectedSkills = Object.keys(langMap)
+      .sort((a, b) => langMap[b] - langMap[a])
+      .map(l => LANG_TO_SKILL[l] || l)
+      .filter(Boolean);
+
+    if (!detectedSkills.length) throw new Error('No languages found in public repos');
+
+    // Pre-fill the resume maker skills input too
+    const rmSkills = document.getElementById('rm-skills-input');
+    if (rmSkills) {
+      const existing = rmSkills.value.trim();
+      rmSkills.value = existing ? existing + ', ' + detectedSkills.join(', ') : detectedSkills.join(', ');
+    }
+
+    showToast(`Imported ${detectedSkills.length} skills from GitHub: ${detectedSkills.slice(0, 4).join(', ')}${detectedSkills.length > 4 ? '...' : ''}`, 'success', 5000);
+
+    // Re-run analysis with new skills merged in
+    if (currentAnalysis) {
+      const merged = [...new Set([...(currentAnalysis.extracted_skills || []), ...detectedSkills])];
+      const role = currentAnalysis.role_key || 'ai';
+      const res2 = await fetch('/api/analyze-skills', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ role, student_skills: merged })
+      });
+      if (res2.ok) {
+        const updated = await res2.json();
+        currentAnalysis = updated;
+        displaySkillAnalysis(updated);
+        showToast('Skill report updated with GitHub skills!', 'success');
+      }
+    }
+  } catch (err) {
+    showToast(err.message || 'GitHub import failed', 'error');
+  } finally {
+    setButtonLoading(btn, false, '<i class="bi bi-cloud-download"></i> Import');
+  }
 }
 
 // Start diagnostic test for a specific skill
@@ -1823,6 +2045,13 @@ function navToScreen(screenId) {
       rmLoadSkillSuggestions();
       if (rmExpCount === 0) rmAddExperience();
       if (rmEduCount === 0) rmAddEducation();
+      break;
+    case 'screen-skills':
+      if (currentAnalysis) {
+        displaySkillAnalysis(currentAnalysis);
+      } else {
+        loadLastSkillAnalysis();
+      }
       break;
   }
   showScreen(screenId);

@@ -805,6 +805,86 @@
           </button>
         </div>
 
+        <!-- ── DeepTech Insights Row ──────────────────────── -->
+        <div class="dt-insights-row" id="dt-insights" style="display:none">
+
+          <!-- Salary Insights -->
+          <div class="dt-card dt-salary-card">
+            <div class="dt-card-head">
+              <i class="bi bi-cash-coin"></i>
+              <span>Salary Insights</span>
+            </div>
+            <div class="dt-salary-range" id="dt-salary-range">
+              <span class="dt-salary-low" id="dt-sal-low">₹0</span>
+              <div class="dt-salary-bar-wrap">
+                <div class="dt-salary-track">
+                  <div class="dt-salary-fill" id="dt-sal-fill"></div>
+                  <div class="dt-salary-marker" id="dt-sal-marker"></div>
+                </div>
+                <div class="dt-salary-labels">
+                  <span>Entry</span><span>Mid</span><span>Senior</span>
+                </div>
+              </div>
+              <span class="dt-salary-high" id="dt-sal-high">₹0</span>
+            </div>
+            <p class="dt-card-sub" id="dt-sal-label">Based on your match score</p>
+          </div>
+
+          <!-- Time to Job-Ready -->
+          <div class="dt-card dt-time-card">
+            <div class="dt-card-head">
+              <i class="bi bi-clock-fill"></i>
+              <span>Time to Job-Ready</span>
+            </div>
+            <div class="dt-time-display">
+              <span class="dt-time-val" id="dt-time-val">—</span>
+              <span class="dt-time-unit" id="dt-time-unit">weeks</span>
+            </div>
+            <div class="dt-time-breakdown" id="dt-time-breakdown"></div>
+          </div>
+
+          <!-- Interview Readiness -->
+          <div class="dt-card dt-interview-card">
+            <div class="dt-card-head">
+              <i class="bi bi-person-check-fill"></i>
+              <span>Interview Readiness</span>
+            </div>
+            <div class="dt-readiness-meter">
+              <div class="dt-meter-track">
+                <div class="dt-meter-fill" id="dt-meter-fill"></div>
+              </div>
+              <div class="dt-readiness-labels">
+                <span>Not Ready</span><span id="dt-readiness-pct">0%</span><span>Ready</span>
+              </div>
+            </div>
+            <div class="dt-readiness-verdict" id="dt-readiness-verdict"></div>
+          </div>
+
+        </div>
+
+        <!-- ── Certifications ─────────────────────────────── -->
+        <div class="dt-certs-section" id="dt-certs-section" style="display:none">
+          <div class="section-title mb-3"><i class="bi bi-patch-check-fill"></i> Recommended Certifications</div>
+          <div class="dt-certs-grid" id="dt-certs-grid"></div>
+        </div>
+
+        <!-- ── GitHub Skill Import ────────────────────────── -->
+        <div class="dt-github-card">
+          <div class="dt-github-left">
+            <div class="dt-github-icon"><i class="bi bi-github"></i></div>
+            <div>
+              <div class="dt-github-title">GitHub Skill Import</div>
+              <p class="dt-github-desc">Enter your GitHub username to auto-detect skills from your public repositories</p>
+            </div>
+          </div>
+          <div class="dt-github-right">
+            <input id="dt-github-input" type="text" class="rm-input dt-github-inp" placeholder="your-github-username"/>
+            <button class="btn btn-secondary btn-sm" onclick="importGitHubSkills()" id="dt-github-btn">
+              <i class="bi bi-cloud-download"></i> Import
+            </button>
+          </div>
+        </div>
+
       </section><!-- /screen-skills -->
 
 

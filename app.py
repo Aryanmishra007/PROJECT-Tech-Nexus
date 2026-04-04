@@ -1372,6 +1372,46 @@ def generate_resume():
     }), 200
 
 
+@app.route('/api/last-analysis', methods=['GET'])
+@require_login
+def last_analysis():
+    """Return the user's most recent skill gap analysis from DB"""
+    user_id = session['user_id']
+    conn = get_db()
+    if not conn:
+        return jsonify({'analysis': None}), 200
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            'SELECT role, missing_skills, priority_areas, created_at FROM skill_gaps WHERE user_id=%s ORDER BY id DESC LIMIT 1',
+            (user_id,)
+        )
+        row = cursor.fetchone()
+        if not row:
+            return jsonify({'analysis': None}), 200
+        role_key = row[0]
+        # Re-run analysis with stored skills to get full picture
+        cursor.execute(
+            'SELECT extracted_skills FROM resumes WHERE user_id=%s ORDER BY id DESC LIMIT 1',
+            (user_id,)
+        )
+        resume_row = cursor.fetchone()
+        student_skills = []
+        if resume_row and resume_row[0]:
+            try:
+                student_skills = json.loads(resume_row[0])
+            except Exception:
+                pass
+        gap_analysis = analyze_skills(student_skills, role_key)
+        return jsonify({'analysis': gap_analysis}), 200
+    except Exception as e:
+        print(f'[ERROR] last-analysis: {e}')
+        return jsonify({'analysis': None}), 200
+    finally:
+        cursor.close()
+        conn.close()
+
+
 # ═══════════════════════════════════════════════════════════════════════
 # Static Files
 # ═══════════════════════════════════════════════════════════════════════
