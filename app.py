@@ -74,7 +74,12 @@ CORS(app, supports_credentials=True, origins='*')
 
 # On Railway (HTTPS) cookies need Secure+SameSite=None
 # Locally (HTTP) use Lax so sessions still work
-_on_railway = bool(os.environ.get('RAILWAY_ENVIRONMENT') or os.environ.get('RAILWAY_SERVICE_ID'))
+_on_railway = bool(
+    os.environ.get('RAILWAY_ENVIRONMENT') or
+    os.environ.get('RAILWAY_SERVICE_ID') or
+    os.environ.get('RAILWAY_PROJECT_ID') or
+    os.environ.get('RAILWAY_STATIC_URL')
+)
 app.config['SESSION_COOKIE_SAMESITE'] = 'None' if _on_railway else 'Lax'
 app.config['SESSION_COOKIE_SECURE']   = _on_railway
 app.config['SESSION_COOKIE_HTTPONLY'] = True

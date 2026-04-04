@@ -1163,6 +1163,7 @@ input, textarea, select, button {
    ══════════════════════════════════════════════════════════════ */
 
 #app-page {
+  display: block !important;
   width: 100%;
   min-height: 100vh;
   position: relative;
@@ -1170,6 +1171,7 @@ input, textarea, select, button {
 
 .app-layout {
   display: flex;
+  width: 100%;
   min-height: 100vh;
   background: var(--bg);
   position: relative;
