@@ -68,9 +68,10 @@ function showScreen(screenId) {
     'screen-diagnostic': 'Diagnostic Test',
     'screen-learning':   'Learning Path',
     'screen-interview':  'Mock Interview',
-    'screen-ats':        'ATS Suggestions',
-    'screen-admin':      'Admin Analytics',
-    'screen-profile':    'My Profile'
+    'screen-ats':          'ATS Suggestions',
+    'screen-admin':        'Admin Analytics',
+    'screen-profile':      'My Profile',
+    'screen-resume-maker': 'AI Resume Maker'
   };
   const titleEl = document.getElementById('header-title');
   if (titleEl) titleEl.textContent = titleMap[screenId] || 'NexaAI';
@@ -1818,6 +1819,11 @@ function navToScreen(screenId) {
     case 'screen-profile':
       loadProfile();
       break;
+    case 'screen-resume-maker':
+      rmLoadSkillSuggestions();
+      if (rmExpCount === 0) rmAddExperience();
+      if (rmEduCount === 0) rmAddEducation();
+      break;
   }
   showScreen(screenId);
 }
@@ -2238,6 +2244,337 @@ function copyUpiId() {
     showToast('UPI ID copied to clipboard!', 'success');
   });
 }
+
+/* ══════════════════════════════════════════════════════════════
+   AI RESUME MAKER
+   ══════════════════════════════════════════════════════════════ */
+
+let rmExpCount = 0;
+let rmEduCount = 0;
+let rmResumeData = null;
+
+/* ── Tab switching ──────────────────────────────────────── */
+function rmTab(panelId, btn) {
+  document.querySelectorAll('.rm-tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.rm-tab').forEach(b => b.classList.remove('active'));
+  const panel = document.getElementById(panelId);
+  if (panel) panel.classList.add('active');
+  if (btn)  btn.classList.add('active');
+}
+
+/* ── Add Experience block ───────────────────────────────── */
+function rmAddExperience() {
+  const idx = rmExpCount++;
+  const list = document.getElementById('rm-exp-list');
+  const block = document.createElement('div');
+  block.className = 'rm-block';
+  block.id = `rm-exp-${idx}`;
+  block.innerHTML = `
+    <div class="rm-block-head">
+      <span class="rm-block-title">Experience #${idx + 1}</span>
+      <button class="rm-remove-btn" onclick="rmRemoveBlock('rm-exp-${idx}')"><i class="bi bi-trash3"></i></button>
+    </div>
+    <div class="rm-row2">
+      <div class="rm-field">
+        <label class="rm-label">Job Title</label>
+        <input class="rm-input rm-exp-title" placeholder="AI Engineer"/>
+      </div>
+      <div class="rm-field">
+        <label class="rm-label">Company</label>
+        <input class="rm-input rm-exp-company" placeholder="Tech Corp"/>
+      </div>
+    </div>
+    <div class="rm-row2">
+      <div class="rm-field">
+        <label class="rm-label">Duration</label>
+        <input class="rm-input rm-exp-duration" placeholder="Jan 2022 – Present"/>
+      </div>
+      <div class="rm-field">
+        <label class="rm-label">Location</label>
+        <input class="rm-input rm-exp-loc" placeholder="Remote / Mumbai"/>
+      </div>
+    </div>
+    <div class="rm-field">
+      <label class="rm-label">Key Achievements <span class="rm-opt">(one per line — AI will enhance them)</span></label>
+      <textarea class="rm-textarea rm-exp-bullets" rows="4"
+        placeholder="Built a recommendation system that improved CTR by 23%&#10;Led a team of 4 engineers to migrate infrastructure to AWS&#10;Reduced model inference time by 40% using quantization"></textarea>
+    </div>
+  `;
+  list.appendChild(block);
+}
+
+/* ── Add Education block ────────────────────────────────── */
+function rmAddEducation() {
+  const idx = rmEduCount++;
+  const list = document.getElementById('rm-edu-list');
+  const block = document.createElement('div');
+  block.className = 'rm-block';
+  block.id = `rm-edu-${idx}`;
+  block.innerHTML = `
+    <div class="rm-block-head">
+      <span class="rm-block-title">Education #${idx + 1}</span>
+      <button class="rm-remove-btn" onclick="rmRemoveBlock('rm-edu-${idx}')"><i class="bi bi-trash3"></i></button>
+    </div>
+    <div class="rm-row2">
+      <div class="rm-field">
+        <label class="rm-label">Degree / Certificate</label>
+        <input class="rm-input rm-edu-degree" placeholder="B.Tech Computer Science"/>
+      </div>
+      <div class="rm-field">
+        <label class="rm-label">Institution</label>
+        <input class="rm-input rm-edu-school" placeholder="IIT Mumbai"/>
+      </div>
+    </div>
+    <div class="rm-row2">
+      <div class="rm-field">
+        <label class="rm-label">Year</label>
+        <input class="rm-input rm-edu-year" placeholder="2022"/>
+      </div>
+      <div class="rm-field">
+        <label class="rm-label">GPA / Percentage</label>
+        <input class="rm-input rm-edu-gpa" placeholder="8.7 / 10"/>
+      </div>
+    </div>
+  `;
+  list.appendChild(block);
+}
+
+function rmRemoveBlock(id) {
+  const el = document.getElementById(id);
+  if (el) el.remove();
+}
+
+/* ── Collect form data ──────────────────────────────────── */
+function rmCollectData() {
+  const personal = {
+    name:     document.getElementById('rm-name')?.value.trim() || '',
+    jobtitle: document.getElementById('rm-jobtitle')?.value.trim() || '',
+    email:    document.getElementById('rm-email')?.value.trim() || '',
+    phone:    document.getElementById('rm-phone')?.value.trim() || '',
+    location: document.getElementById('rm-location')?.value.trim() || '',
+    linkedin: document.getElementById('rm-linkedin')?.value.trim() || '',
+    github:   document.getElementById('rm-github')?.value.trim() || '',
+  };
+
+  const summary  = document.getElementById('rm-summary')?.value.trim() || '';
+  const role     = document.getElementById('rm-role')?.value || 'ai';
+  const skillRaw = document.getElementById('rm-skills-input')?.value || '';
+  const skills   = skillRaw.split(',').map(s => s.trim()).filter(Boolean);
+
+  // Collect experience blocks
+  const experience = [];
+  document.querySelectorAll('.rm-block[id^="rm-exp-"]').forEach(block => {
+    const title    = block.querySelector('.rm-exp-title')?.value.trim();
+    const company  = block.querySelector('.rm-exp-company')?.value.trim();
+    const duration = block.querySelector('.rm-exp-duration')?.value.trim();
+    const location = block.querySelector('.rm-exp-loc')?.value.trim();
+    const bulletsRaw = block.querySelector('.rm-exp-bullets')?.value || '';
+    const bullets  = bulletsRaw.split('\n').map(b => b.trim()).filter(Boolean);
+    if (title || company) {
+      experience.push({ title, company, duration, location, bullets });
+    }
+  });
+
+  // Collect education blocks
+  const education = [];
+  document.querySelectorAll('.rm-block[id^="rm-edu-"]').forEach(block => {
+    const degree = block.querySelector('.rm-edu-degree')?.value.trim();
+    const school = block.querySelector('.rm-edu-school')?.value.trim();
+    const year   = block.querySelector('.rm-edu-year')?.value.trim();
+    const gpa    = block.querySelector('.rm-edu-gpa')?.value.trim();
+    if (degree || school) {
+      education.push({ degree, school, year, gpa });
+    }
+  });
+
+  return { target_role: role, personal, summary, experience, education, skills };
+}
+
+/* ── Generate resume ────────────────────────────────────── */
+async function generateAIResume() {
+  const formData = rmCollectData();
+  if (!formData.personal.name || !formData.personal.email) {
+    showToast('Please enter your name and email in the Personal tab', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('rm-gen-btn');
+  setButtonLoading(btn, true, 'Generating...');
+
+  try {
+    const res = await fetch('/api/generate-resume', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(formData)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Generation failed');
+
+    rmResumeData = data;
+    rmRenderResume(data);
+    rmAnimateScore(data.ats_score);
+
+    document.getElementById('rm-dl-btn').disabled   = false;
+    document.getElementById('rm-copy-btn').disabled = false;
+    showToast(`Resume generated! ATS Score: ${data.ats_score}%`, 'success');
+  } catch (err) {
+    showToast(err.message || 'Failed to generate resume', 'error');
+  } finally {
+    setButtonLoading(btn, false, '<i class="bi bi-stars"></i> Generate ATS Resume');
+  }
+}
+
+/* ── Render resume preview ──────────────────────────────── */
+function rmRenderResume(data) {
+  const resume = data.resume;
+  const p = resume.personal;
+
+  // Contact line items
+  const contactItems = [
+    p.email    ? `<span><i class="bi bi-envelope-fill"></i> ${p.email}</span>` : '',
+    p.phone    ? `<span><i class="bi bi-telephone-fill"></i> ${p.phone}</span>` : '',
+    p.location ? `<span><i class="bi bi-geo-alt-fill"></i> ${p.location}</span>` : '',
+    p.linkedin ? `<span><i class="bi bi-linkedin"></i> ${p.linkedin}</span>` : '',
+    p.github   ? `<span><i class="bi bi-github"></i> ${p.github}</span>` : '',
+  ].filter(Boolean).join('');
+
+  // Experience section
+  let expHtml = '';
+  if (resume.experience?.length) {
+    expHtml = `<div class="rm-res-section">
+      <div class="rm-res-section-title">Work Experience</div>
+      ${resume.experience.map(exp => `
+        <div style="margin-bottom:0.75rem">
+          <div class="rm-res-exp-header">
+            <span class="rm-res-exp-title">${exp.title || ''}</span>
+            <span class="rm-res-exp-dur">${exp.duration || ''}</span>
+          </div>
+          <div class="rm-res-exp-co">${[exp.company, exp.location].filter(Boolean).join(' · ')}</div>
+          ${exp.bullets?.length ? `<ul class="rm-res-bullets">${exp.bullets.map(b => `<li>${b}</li>`).join('')}</ul>` : ''}
+        </div>
+      `).join('<div class="rm-res-divider-thin"></div>')}
+    </div>`;
+  }
+
+  // Education section
+  let eduHtml = '';
+  if (resume.education?.length) {
+    eduHtml = `<div class="rm-res-section">
+      <div class="rm-res-section-title">Education</div>
+      ${resume.education.map(edu => `
+        <div style="margin-bottom:0.5rem">
+          <div class="rm-res-edu-row">
+            <span class="rm-res-edu-deg">${edu.degree || ''}</span>
+            <span class="rm-res-edu-yr">${edu.year || ''}</span>
+          </div>
+          <div class="rm-res-edu-sch">${edu.school || ''}${edu.gpa ? ` &nbsp;·&nbsp; <span class="rm-res-edu-gpa">GPA: ${edu.gpa}</span>` : ''}</div>
+        </div>
+      `).join('')}
+    </div>`;
+  }
+
+  // Skills section
+  const skills = resume.skills || {};
+  const techChips = (skills.technical || []).map(s => `<span class="rm-res-skill-chip">${s}</span>`).join('');
+  const toolChips = (skills.tools     || []).map(s => `<span class="rm-res-skill-chip tool-chip">${s}</span>`).join('');
+  const softChips = (skills.soft      || []).map(s => `<span class="rm-res-skill-chip soft-chip">${s}</span>`).join('');
+  const skillHtml = `<div class="rm-res-section">
+    <div class="rm-res-section-title">Skills</div>
+    <div class="rm-res-skills-grid">${techChips}${toolChips}${softChips}</div>
+  </div>`;
+
+  const html = `
+    <div class="rm-res-name">${p.name || 'Your Name'}</div>
+    ${p.jobtitle ? `<div class="rm-res-title">${p.jobtitle || resume.role_title}</div>` : `<div class="rm-res-title">${resume.role_title}</div>`}
+    <div class="rm-res-contact">${contactItems}</div>
+    <hr class="rm-res-divider"/>
+
+    <div class="rm-res-section">
+      <div class="rm-res-section-title">Professional Summary</div>
+      <div class="rm-res-summary">${resume.summary}</div>
+    </div>
+
+    ${expHtml}
+    ${eduHtml}
+    ${skillHtml}
+  `;
+
+  const doc = document.getElementById('rm-resume-doc');
+  const placeholder = document.getElementById('rm-placeholder');
+  doc.innerHTML = html;
+  doc.style.display = 'block';
+  placeholder.style.display = 'none';
+
+  // Also fill print area
+  document.getElementById('rm-print-area').innerHTML = `<div class="rm-resume-doc">${html}</div>`;
+}
+
+/* ── Animate ATS score ring ─────────────────────────────── */
+function rmAnimateScore(score) {
+  const numEl  = document.getElementById('rm-ats-score');
+  const subEl  = document.getElementById('rm-score-sub');
+  const arc    = document.querySelector('.rm-ring-arc');
+
+  if (numEl) numEl.textContent = score + '%';
+  if (subEl) {
+    const label = score >= 95 ? 'Excellent — Top 5%' :
+                  score >= 92 ? 'Very Strong' : 'Strong';
+    subEl.textContent = label;
+    subEl.style.color = '#10b981';
+  }
+
+  if (arc) {
+    const circ = 207; // 2π×33
+    const offset = circ - (score / 100) * circ;
+    setTimeout(() => { arc.style.strokeDashoffset = offset; }, 100);
+  }
+}
+
+/* ── Download as PDF ────────────────────────────────────── */
+function downloadResumePDF() {
+  if (!rmResumeData) return;
+  window.print();
+}
+
+/* ── Copy resume as plain text ──────────────────────────── */
+function copyResumeText() {
+  const doc = document.getElementById('rm-resume-doc');
+  if (!doc) return;
+  const text = doc.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('Resume text copied to clipboard!', 'success');
+  }).catch(() => {
+    showToast('Copy failed — please select and copy manually', 'error');
+  });
+}
+
+/* ── Load skills from current analysis ──────────────────── */
+function rmLoadSkillSuggestions() {
+  if (!currentAnalysis?.extracted_skills?.length) return;
+  const container = document.getElementById('rm-skill-suggestions');
+  const chips     = document.getElementById('rm-skill-chips');
+  if (!container || !chips) return;
+
+  chips.innerHTML = currentAnalysis.extracted_skills.slice(0, 20).map(skill =>
+    `<span class="rm-chip" onclick="rmAddSkipChip(this, '${skill}')">${skill}</span>`
+  ).join('');
+  container.style.display = 'block';
+}
+
+function rmAddSkipChip(el, skill) {
+  const ta = document.getElementById('rm-skills-input');
+  if (!ta) return;
+  const current = ta.value.trim();
+  const existing = current.split(',').map(s => s.trim().toLowerCase());
+  if (!existing.includes(skill.toLowerCase())) {
+    ta.value = current ? current + ', ' + skill : skill;
+  }
+  el.classList.add('added');
+}
+
+// Show skill suggestions when user navigates to resume maker
+const _origNavToScreen = typeof navToScreen === 'function' ? navToScreen : null;
 
 // Show fallback QR display if image fails to load
 function showQrFallback() {

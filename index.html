@@ -341,6 +341,12 @@
         <span>ATS Suggestions</span>
       </div>
 
+      <div class="nav-item nav-item-highlight" data-screen="screen-resume-maker" onclick="navToScreen('screen-resume-maker')" role="button" tabindex="0">
+        <i class="bi bi-file-earmark-person-fill"></i>
+        <span>AI Resume Maker</span>
+        <span class="nav-badge">NEW</span>
+      </div>
+
       <div class="nav-section-label">Upgrade</div>
 
       <div class="nav-item" data-screen="screen-pricing" onclick="navToScreen('screen-pricing')" role="button" tabindex="0">
@@ -1349,6 +1355,179 @@
         </div>
 
       </section><!-- /screen-profile -->
+
+
+      <!-- ════════════════════════════════════════════════════
+           SCREEN — AI RESUME MAKER
+           ════════════════════════════════════════════════════ -->
+      <section id="screen-resume-maker" class="screen">
+
+        <div class="rm-layout">
+
+          <!-- ── LEFT: FORM ─────────────────────────────────── -->
+          <div class="rm-form-panel">
+            <div class="rm-form-head">
+              <div class="section-title"><i class="bi bi-stars"></i> AI Resume Maker</div>
+              <p class="text-muted fs-sm mt-1">Build an ATS-optimized resume — guaranteed 91+ score</p>
+            </div>
+
+            <!-- Tabs -->
+            <div class="rm-tabs">
+              <button class="rm-tab active" onclick="rmTab('rm-personal', this)"><i class="bi bi-person-fill"></i> Personal</button>
+              <button class="rm-tab" onclick="rmTab('rm-experience', this)"><i class="bi bi-briefcase-fill"></i> Experience</button>
+              <button class="rm-tab" onclick="rmTab('rm-education', this)"><i class="bi bi-mortarboard-fill"></i> Education</button>
+              <button class="rm-tab" onclick="rmTab('rm-skills-tab', this)"><i class="bi bi-tools"></i> Skills</button>
+            </div>
+
+            <!-- Tab: Personal -->
+            <div id="rm-personal" class="rm-tab-panel active">
+              <div class="rm-field">
+                <label class="rm-label">Target Role <span class="rm-req">*</span></label>
+                <select id="rm-role" class="role-select rm-select">
+                  <option value="ai">AI Engineer</option>
+                  <option value="data_analyst">Data Analyst</option>
+                  <option value="web_developer">Web Developer</option>
+                  <option value="ml_engineer">ML Engineer</option>
+                  <option value="devops">DevOps Engineer</option>
+                </select>
+              </div>
+              <div class="rm-row2">
+                <div class="rm-field">
+                  <label class="rm-label">Full Name <span class="rm-req">*</span></label>
+                  <input id="rm-name" type="text" class="rm-input" placeholder="Aryan Mishra"/>
+                </div>
+                <div class="rm-field">
+                  <label class="rm-label">Job Title</label>
+                  <input id="rm-jobtitle" type="text" class="rm-input" placeholder="AI Engineer"/>
+                </div>
+              </div>
+              <div class="rm-row2">
+                <div class="rm-field">
+                  <label class="rm-label">Email <span class="rm-req">*</span></label>
+                  <input id="rm-email" type="email" class="rm-input" placeholder="you@email.com"/>
+                </div>
+                <div class="rm-field">
+                  <label class="rm-label">Phone</label>
+                  <input id="rm-phone" type="tel" class="rm-input" placeholder="+91 98765 43210"/>
+                </div>
+              </div>
+              <div class="rm-row2">
+                <div class="rm-field">
+                  <label class="rm-label">Location</label>
+                  <input id="rm-location" type="text" class="rm-input" placeholder="Mumbai, India"/>
+                </div>
+                <div class="rm-field">
+                  <label class="rm-label">LinkedIn</label>
+                  <input id="rm-linkedin" type="text" class="rm-input" placeholder="linkedin.com/in/yourname"/>
+                </div>
+              </div>
+              <div class="rm-field">
+                <label class="rm-label">GitHub / Portfolio</label>
+                <input id="rm-github" type="text" class="rm-input" placeholder="github.com/yourname"/>
+              </div>
+              <div class="rm-field">
+                <label class="rm-label">Summary <span class="rm-opt">— leave blank for AI to generate</span></label>
+                <textarea id="rm-summary" class="rm-textarea" rows="3" placeholder="Leave empty — AI will generate an ATS-optimized summary for you..."></textarea>
+              </div>
+            </div>
+
+            <!-- Tab: Experience -->
+            <div id="rm-experience" class="rm-tab-panel">
+              <div id="rm-exp-list"></div>
+              <button class="btn btn-secondary btn-sm mt-3" onclick="rmAddExperience()">
+                <i class="bi bi-plus-circle"></i> Add Work Experience
+              </button>
+            </div>
+
+            <!-- Tab: Education -->
+            <div id="rm-education" class="rm-tab-panel">
+              <div id="rm-edu-list"></div>
+              <button class="btn btn-secondary btn-sm mt-3" onclick="rmAddEducation()">
+                <i class="bi bi-plus-circle"></i> Add Education
+              </button>
+            </div>
+
+            <!-- Tab: Skills -->
+            <div id="rm-skills-tab" class="rm-tab-panel">
+              <div class="rm-field">
+                <label class="rm-label">Your Skills <span class="rm-opt">(comma-separated)</span></label>
+                <textarea id="rm-skills-input" class="rm-textarea" rows="5"
+                  placeholder="Python, TensorFlow, PyTorch, Machine Learning, SQL, Docker, AWS, Git..."></textarea>
+              </div>
+              <div class="rm-tip-box">
+                <i class="bi bi-magic"></i>
+                <div>
+                  <strong>AI Boost Active</strong>
+                  <p>AI will automatically inject role-specific keywords into your resume to guarantee a 91+ ATS score.</p>
+                </div>
+              </div>
+              <div id="rm-skill-suggestions" style="display:none">
+                <p class="rm-label mt-3 mb-2">Quick-add from your resume:</p>
+                <div id="rm-skill-chips" class="rm-chips"></div>
+              </div>
+            </div>
+
+            <!-- Generate Button -->
+            <div class="rm-generate-row">
+              <button id="rm-gen-btn" class="btn btn-primary btn-glow rm-gen-btn" onclick="generateAIResume()">
+                <i class="bi bi-stars"></i> Generate ATS Resume
+              </button>
+            </div>
+          </div>
+
+          <!-- ── RIGHT: PREVIEW ─────────────────────────────── -->
+          <div class="rm-preview-panel">
+
+            <!-- ATS Score bar -->
+            <div class="rm-score-header">
+              <div class="rm-score-left">
+                <div class="rm-score-ring-wrap">
+                  <svg viewBox="0 0 80 80" class="rm-score-svg">
+                    <defs>
+                      <linearGradient id="atsGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#10b981"/>
+                        <stop offset="100%" stop-color="#22d3ee"/>
+                      </linearGradient>
+                    </defs>
+                    <circle cx="40" cy="40" r="33" fill="none" stroke="rgba(16,185,129,0.1)" stroke-width="7"/>
+                    <circle cx="40" cy="40" r="33" fill="none" stroke="url(#atsGrad)" stroke-width="7"
+                      stroke-linecap="round" stroke-dasharray="207" stroke-dashoffset="207"
+                      class="rm-ring-arc" transform="rotate(-90 40 40)"/>
+                  </svg>
+                  <span class="rm-score-num" id="rm-ats-score">—</span>
+                </div>
+                <div class="rm-score-info">
+                  <div class="rm-score-title">ATS Score</div>
+                  <div class="rm-score-sub" id="rm-score-sub">Generate to see score</div>
+                </div>
+              </div>
+              <div class="rm-score-actions">
+                <button class="btn btn-primary btn-sm" id="rm-dl-btn" onclick="downloadResumePDF()" disabled>
+                  <i class="bi bi-download"></i> PDF
+                </button>
+                <button class="btn btn-secondary btn-sm" id="rm-copy-btn" onclick="copyResumeText()" disabled>
+                  <i class="bi bi-clipboard"></i> Copy
+                </button>
+              </div>
+            </div>
+
+            <!-- Resume preview -->
+            <div class="rm-preview-box" id="rm-preview-box">
+              <div class="rm-placeholder" id="rm-placeholder">
+                <i class="bi bi-file-earmark-person"></i>
+                <p>Your AI-generated resume will<br/>appear here after generation</p>
+              </div>
+              <!-- Actual resume document -->
+              <div id="rm-resume-doc" class="rm-resume-doc" style="display:none"></div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Hidden printable resume -->
+        <div id="rm-print-area" style="display:none"></div>
+
+      </section><!-- /screen-resume-maker -->
 
 
     </div><!-- /content-area -->

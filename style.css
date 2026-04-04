@@ -2381,6 +2381,380 @@ input, textarea, select, button {
   .dash-features { grid-template-columns: 1fr; }
 }
 
+/* ══════════════════════════════════════════════════════════
+   AI RESUME MAKER
+   ══════════════════════════════════════════════════════════ */
+
+/* Sidebar highlight for new feature */
+.nav-item-highlight {
+  background: linear-gradient(135deg, rgba(139,92,246,0.12), rgba(34,211,238,0.08));
+  border: 1px solid rgba(139,92,246,0.2);
+  border-radius: var(--radius-sm);
+  position: relative;
+}
+.nav-item-highlight:hover {
+  background: linear-gradient(135deg, rgba(139,92,246,0.2), rgba(34,211,238,0.12));
+  border-color: rgba(139,92,246,0.4);
+}
+.nav-badge {
+  margin-left: auto;
+  background: linear-gradient(135deg, #8b5cf6, #22d3ee);
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+
+/* Main two-panel layout */
+.rm-layout {
+  display: grid;
+  grid-template-columns: 420px 1fr;
+  gap: 1.5rem;
+  align-items: start;
+  min-height: calc(100vh - 140px);
+}
+
+/* ── Form Panel ──────────────────────────────────────────── */
+.rm-form-panel {
+  background: var(--gradient-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 1.75rem;
+  position: sticky;
+  top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.rm-form-panel::-webkit-scrollbar { width: 4px; }
+.rm-form-panel::-webkit-scrollbar-track { background: transparent; }
+.rm-form-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+.rm-form-head { padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+
+/* Tabs */
+.rm-tabs {
+  display: flex;
+  gap: 0.375rem;
+  background: var(--surface2);
+  border-radius: var(--radius);
+  padding: 0.25rem;
+}
+.rm-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.5rem 0.25rem;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+.rm-tab.active {
+  background: var(--surface3);
+  color: var(--accent-light);
+  box-shadow: var(--shadow-sm);
+}
+.rm-tab:hover:not(.active) { color: var(--text-secondary); }
+
+/* Tab panels */
+.rm-tab-panel { display: none; flex-direction: column; gap: 0.875rem; }
+.rm-tab-panel.active { display: flex; }
+
+/* Form fields */
+.rm-field { display: flex; flex-direction: column; gap: 0.375rem; }
+.rm-row2  { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.rm-label { font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); }
+.rm-req   { color: var(--accent-light); }
+.rm-opt   { color: var(--muted2); font-weight: 400; font-size: 0.72rem; }
+.rm-input, .rm-select, .rm-textarea {
+  background: rgba(18,18,28,0.8);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.625rem 0.875rem;
+  color: var(--text);
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color var(--transition), box-shadow var(--transition);
+  width: 100%;
+  font-family: inherit;
+}
+.rm-input:focus, .rm-select:focus, .rm-textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(139,92,246,0.12);
+}
+.rm-textarea { resize: vertical; min-height: 80px; }
+.rm-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23a78bfa' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.875rem center;
+  padding-right: 2.25rem;
+  cursor: pointer;
+}
+.rm-select option { background: var(--surface2); }
+
+/* Experience / Education dynamic blocks */
+.rm-block {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  position: relative;
+}
+.rm-block-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.25rem;
+}
+.rm-block-title { font-size: 0.85rem; font-weight: 700; color: var(--text); }
+.rm-remove-btn {
+  background: none;
+  border: none;
+  color: var(--danger-light);
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 0.25rem;
+  opacity: 0.6;
+  transition: opacity var(--transition);
+}
+.rm-remove-btn:hover { opacity: 1; }
+
+/* Skills tip */
+.rm-tip-box {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  background: linear-gradient(135deg, rgba(139,92,246,0.1), rgba(34,211,238,0.06));
+  border: 1px solid rgba(139,92,246,0.2);
+  border-radius: var(--radius);
+  padding: 0.875rem 1rem;
+  font-size: 0.8rem;
+}
+.rm-tip-box .bi { color: var(--accent-light); font-size: 1.1rem; margin-top: 0.1rem; flex-shrink: 0; }
+.rm-tip-box strong { color: var(--text); display: block; margin-bottom: 0.2rem; }
+.rm-tip-box p { color: var(--text-secondary); margin: 0; }
+
+/* Quick-add chips */
+.rm-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.rm-chip {
+  background: rgba(139,92,246,0.12);
+  border: 1px solid rgba(139,92,246,0.25);
+  border-radius: 999px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  color: var(--accent-light);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.rm-chip:hover { background: rgba(139,92,246,0.25); border-color: rgba(139,92,246,0.5); }
+.rm-chip.added { background: rgba(16,185,129,0.15); border-color: rgba(16,185,129,0.3); color: var(--success-light); }
+
+/* Generate button */
+.rm-generate-row {
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+.rm-gen-btn { width: 100%; justify-content: center; font-size: 1rem; padding: 0.875rem; }
+
+/* ── Preview Panel ───────────────────────────────────────── */
+.rm-preview-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* ATS score header */
+.rm-score-header {
+  background: var(--gradient-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.rm-score-left { display: flex; align-items: center; gap: 1rem; }
+.rm-score-ring-wrap { position: relative; width: 80px; height: 80px; flex-shrink: 0; }
+.rm-score-svg { width: 100%; height: 100%; }
+.rm-ring-arc { transition: stroke-dashoffset 1.2s cubic-bezier(0.4,0,0.2,1); filter: drop-shadow(0 0 6px rgba(16,185,129,0.5)); }
+.rm-score-num {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Syne', sans-serif;
+  font-size: 1.1rem; font-weight: 800;
+  background: linear-gradient(135deg, #10b981, #22d3ee);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.rm-score-title { font-weight: 700; font-size: 1rem; color: var(--text); }
+.rm-score-sub   { font-size: 0.75rem; color: var(--muted); margin-top: 0.2rem; }
+.rm-score-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
+
+/* Preview box */
+.rm-preview-box {
+  background: #fff;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-xl), 0 0 0 1px rgba(0,0,0,0.08);
+  min-height: 500px;
+}
+.rm-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 500px;
+  gap: 1rem;
+  color: #9ca3af;
+}
+.rm-placeholder .bi { font-size: 3.5rem; opacity: 0.3; }
+.rm-placeholder p { font-size: 0.9rem; text-align: center; line-height: 1.6; margin: 0; }
+
+/* ── Resume Document Styles (white/print) ────────────────── */
+.rm-resume-doc {
+  background: #fff;
+  color: #1a1a2e;
+  font-family: 'DM Sans', 'Segoe UI', Arial, sans-serif;
+  font-size: 10.5pt;
+  line-height: 1.45;
+  padding: 2.5rem 2.25rem;
+}
+.rm-res-name {
+  font-family: 'Syne', sans-serif;
+  font-size: 22pt;
+  font-weight: 800;
+  color: #1a1a2e;
+  margin-bottom: 0.2rem;
+  letter-spacing: -0.02em;
+}
+.rm-res-title {
+  font-size: 11pt;
+  color: #7c3aed;
+  font-weight: 600;
+  margin-bottom: 0.6rem;
+}
+.rm-res-contact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.25rem;
+  font-size: 9pt;
+  color: #4b5563;
+  margin-bottom: 0.75rem;
+}
+.rm-res-contact span { display: flex; align-items: center; gap: 0.3rem; }
+.rm-res-divider {
+  border: none;
+  border-top: 2px solid #7c3aed;
+  margin: 0.6rem 0 1rem;
+}
+.rm-res-divider-thin {
+  border: none;
+  border-top: 1px solid #e5e7eb;
+  margin: 0.75rem 0;
+}
+.rm-res-section { margin-bottom: 1rem; }
+.rm-res-section-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 10pt;
+  font-weight: 800;
+  color: #7c3aed;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.5rem;
+}
+.rm-res-summary { color: #374151; line-height: 1.6; font-size: 10pt; }
+.rm-res-exp-header {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: 0.25rem;
+}
+.rm-res-exp-title { font-weight: 700; color: #111827; font-size: 10.5pt; }
+.rm-res-exp-dur   { font-size: 9pt; color: #6b7280; white-space: nowrap; }
+.rm-res-exp-co    { font-size: 9.5pt; color: #4b5563; font-weight: 600; margin-bottom: 0.35rem; }
+.rm-res-bullets { margin: 0; padding-left: 1.1rem; }
+.rm-res-bullets li { color: #374151; margin-bottom: 0.2rem; font-size: 9.5pt; }
+.rm-res-edu-row {
+  display: flex; justify-content: space-between; align-items: baseline;
+}
+.rm-res-edu-deg  { font-weight: 700; color: #111827; font-size: 10pt; }
+.rm-res-edu-yr   { font-size: 9pt; color: #6b7280; }
+.rm-res-edu-sch  { font-size: 9.5pt; color: #4b5563; }
+.rm-res-edu-gpa  { font-size: 9pt; color: #6b7280; }
+
+/* Skills in resume */
+.rm-res-skills-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.rm-res-skill-chip {
+  background: #f3f0ff;
+  border: 1px solid #c4b5fd;
+  border-radius: 4px;
+  padding: 0.15rem 0.5rem;
+  font-size: 8.5pt;
+  color: #5b21b6;
+  font-weight: 500;
+}
+.rm-res-skill-chip.tool-chip {
+  background: #ecfeff; border-color: #a5f3fc; color: #0e7490;
+}
+.rm-res-skill-chip.soft-chip {
+  background: #f0fdf4; border-color: #86efac; color: #15803d;
+}
+
+/* ATS keyword highlight in resume */
+.rm-res-kw { font-weight: 600; }
+
+/* ── Print styles ────────────────────────────────────────── */
+@media print {
+  body * { visibility: hidden !important; }
+  #rm-print-area, #rm-print-area * { visibility: visible !important; }
+  #rm-print-area {
+    display: block !important;
+    position: fixed !important;
+    inset: 0 !important;
+    background: #fff !important;
+    padding: 1.5cm 2cm !important;
+    font-family: 'DM Sans', Arial, sans-serif !important;
+    font-size: 10pt !important;
+    color: #1a1a2e !important;
+    z-index: 99999 !important;
+  }
+}
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 1100px) {
+  .rm-layout { grid-template-columns: 380px 1fr; }
+}
+@media (max-width: 900px) {
+  .rm-layout { grid-template-columns: 1fr; }
+  .rm-form-panel { position: static; max-height: none; }
+}
+@media (max-width: 600px) {
+  .rm-row2 { grid-template-columns: 1fr; }
+  .rm-score-header { flex-direction: column; align-items: flex-start; }
+}
+
 .empty-state {
   text-align: center;
   padding: 3rem 1rem;
