@@ -2760,7 +2760,58 @@ input, textarea, select, button {
 .rm-res-edu-sch  { font-size: 9.5pt; color: #4b5563; }
 .rm-res-edu-gpa  { font-size: 9pt; color: #6b7280; }
 
-/* Skills in resume */
+/* Skills in resume - PAVAN GURAV DOCX format */
+.rm-res-skills-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.rm-res-skill-line {
+  font-size: 9.5pt;
+  color: #374151;
+  line-height: 1.5;
+}
+.rm-res-skill-line strong {
+  color: #111827;
+  font-weight: 600;
+}
+
+/* Experience entry - PAVAN GURAV format */
+.rm-res-exp-entry {
+  margin-bottom: 0.85rem;
+}
+.rm-res-exp-company {
+  font-weight: 700;
+  font-size: 10pt;
+  color: #111827;
+  margin-bottom: 0.15rem;
+}
+
+/* Education entry - PAVAN GURAV format */
+.rm-res-edu-entry {
+  margin-bottom: 0.35rem;
+}
+
+/* Contact line - PAVAN GURAV format */
+.rm-res-contact-line {
+  text-align: center;
+  font-size: 9.5pt;
+  color: #4b5563;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* Page 2 header for 2-page format */
+.rm-page2-header {
+  text-align: center;
+  font-size: 9pt;
+  color: #9ca3af;
+  margin: 1rem 0;
+  font-style: italic;
+}
+
+/* Legacy chip styles (kept for backwards compatibility) */
 .rm-res-skills-grid {
   display: flex;
   flex-wrap: wrap;

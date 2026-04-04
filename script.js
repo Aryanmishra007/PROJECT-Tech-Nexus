@@ -2583,7 +2583,8 @@ function rmUpdateFormatBadge(years) {
   const text  = document.getElementById('rm-format-text');
   if (!hint) return;
   hint.style.display = 'flex';
-  const two = parseFloat(years) >= 3;
+  // Smart Format: < 9 years = 1 Page, 9+ years = 2 Pages (Senior)
+  const two = parseFloat(years) >= 9;
   if (badge) badge.className = 'rm-format-badge ' + (two ? 'two-page' : 'one-page');
   if (text)  text.textContent = two ? '2 Pages (Senior)' : '1 Page (Standard)';
 }
@@ -2775,50 +2776,52 @@ function rmRenderResume(data) {
     p.github   ? `<span><i class="bi bi-github"></i> ${p.github}</span>` : '',
   ].filter(Boolean).join('');
 
-  // Experience section
+  // Experience section - PAVAN GURAV format: Company — Location, Title | Dates
   let expHtml = '';
   if (resume.experience?.length) {
     expHtml = `<div class="rm-res-section">
-      <div class="rm-res-section-title">Work Experience</div>
+      <div class="rm-res-section-title">PROFESSIONAL EXPERIENCE</div>
       ${resume.experience.map(exp => `
-        <div style="margin-bottom:0.75rem">
+        <div class="rm-res-exp-entry">
+          <div class="rm-res-exp-company">${exp.company || ''}${exp.location ? ` — ${exp.location}` : ''}</div>
           <div class="rm-res-exp-header">
             <span class="rm-res-exp-title">${exp.title || ''}</span>
             <span class="rm-res-exp-dur">${exp.duration || ''}</span>
           </div>
-          <div class="rm-res-exp-co">${[exp.company, exp.location].filter(Boolean).join(' · ')}</div>
           ${exp.bullets?.length ? `<ul class="rm-res-bullets">${exp.bullets.map(b => `<li>${b}</li>`).join('')}</ul>` : ''}
-        </div>
-      `).join('<div class="rm-res-divider-thin"></div>')}
-    </div>`;
-  }
-
-  // Education section
-  let eduHtml = '';
-  if (resume.education?.length) {
-    eduHtml = `<div class="rm-res-section">
-      <div class="rm-res-section-title">Education</div>
-      ${resume.education.map(edu => `
-        <div style="margin-bottom:0.5rem">
-          <div class="rm-res-edu-row">
-            <span class="rm-res-edu-deg">${edu.degree || ''}</span>
-            <span class="rm-res-edu-yr">${edu.year || ''}</span>
-          </div>
-          <div class="rm-res-edu-sch">${edu.school || ''}${edu.gpa ? ` &nbsp;·&nbsp; <span class="rm-res-edu-gpa">GPA: ${edu.gpa}</span>` : ''}</div>
         </div>
       `).join('')}
     </div>`;
   }
 
-  // Skills section
+  // Education section - PAVAN GURAV format
+  let eduHtml = '';
+  if (resume.education?.length) {
+    eduHtml = `<div class="rm-res-section">
+      <div class="rm-res-section-title">EDUCATION</div>
+      ${resume.education.map(edu => `
+        <div class="rm-res-edu-entry">
+          <div class="rm-res-edu-deg">${edu.degree || ''}${edu.status ? ` — ${edu.status}` : ''} (${edu.school || ''}${edu.year ? ` | ${edu.year}` : ''})</div>
+        </div>
+      `).join('')}
+    </div>`;
+  }
+
+  // Skills section - PAVAN GURAV DOCX format: "Category: skill1, skill2, skill3"
   const skills = resume.skills || {};
-  const techChips = (skills.technical || []).map(s => `<span class="rm-res-skill-chip">${s}</span>`).join('');
-  const toolChips = (skills.tools     || []).map(s => `<span class="rm-res-skill-chip tool-chip">${s}</span>`).join('');
-  const softChips = (skills.soft      || []).map(s => `<span class="rm-res-skill-chip soft-chip">${s}</span>`).join('');
-  const skillHtml = `<div class="rm-res-section">
-    <div class="rm-res-section-title">Skills</div>
-    <div class="rm-res-skills-grid">${techChips}${toolChips}${softChips}</div>
-  </div>`;
+  const techList = (skills.technical || []).join(', ');
+  const toolList = (skills.tools     || []).join(', ');
+  const softList = (skills.soft      || []).join(', ');
+  
+  let skillLines = [];
+  if (techList) skillLines.push(`<div class="rm-res-skill-line"><strong>Technical Skills:</strong> ${techList}</div>`);
+  if (toolList) skillLines.push(`<div class="rm-res-skill-line"><strong>Tools & Platforms:</strong> ${toolList}</div>`);
+  if (softList) skillLines.push(`<div class="rm-res-skill-line"><strong>Soft Skills:</strong> ${softList}</div>`);
+  
+  const skillHtml = skillLines.length ? `<div class="rm-res-section">
+    <div class="rm-res-section-title">CORE SKILLS</div>
+    <div class="rm-res-skills-list">${skillLines.join('')}</div>
+  </div>` : '';
 
   const twoPage = data.two_page || data.resume?.two_page || false;
 
@@ -2829,44 +2832,54 @@ function rmRenderResume(data) {
     const exp1 = resume.experience.slice(0, half);
     const exp2 = resume.experience.slice(half);
     page1Exp = exp1.length ? `<div class="rm-res-section">
-      <div class="rm-res-section-title">Work Experience</div>
+      <div class="rm-res-section-title">PROFESSIONAL EXPERIENCE</div>
       ${exp1.map(exp => `
-        <div style="margin-bottom:0.75rem">
+        <div class="rm-res-exp-entry">
+          <div class="rm-res-exp-company">${exp.company || ''}${exp.location ? ` — ${exp.location}` : ''}</div>
           <div class="rm-res-exp-header">
             <span class="rm-res-exp-title">${exp.title || ''}</span>
             <span class="rm-res-exp-dur">${exp.duration || ''}</span>
           </div>
-          <div class="rm-res-exp-co">${[exp.company, exp.location].filter(Boolean).join(' · ')}</div>
           ${exp.bullets?.length ? `<ul class="rm-res-bullets">${exp.bullets.map(b => `<li>${b}</li>`).join('')}</ul>` : ''}
-        </div>`).join('<div class="rm-res-divider-thin"></div>')}
+        </div>`).join('')}
     </div>` : '';
-    page2Content = exp2.length ? `<div class="rm-res-section">
-      <div class="rm-res-section-title">Work Experience (Continued)</div>
-      ${exp2.map(exp => `
-        <div style="margin-bottom:0.75rem">
-          <div class="rm-res-exp-header">
-            <span class="rm-res-exp-title">${exp.title || ''}</span>
-            <span class="rm-res-exp-dur">${exp.duration || ''}</span>
-          </div>
-          <div class="rm-res-exp-co">${[exp.company, exp.location].filter(Boolean).join(' · ')}</div>
-          ${exp.bullets?.length ? `<ul class="rm-res-bullets">${exp.bullets.map(b => `<li>${b}</li>`).join('')}</ul>` : ''}
-        </div>`).join('<div class="rm-res-divider-thin"></div>')}
-    </div>` : '';
+    page2Content = `
+      <div class="rm-page2-header">— Page 2 —</div>
+      ${exp2.length ? `<div class="rm-res-section">
+        <div class="rm-res-section-title">PROFESSIONAL EXPERIENCE (Continued)</div>
+        ${exp2.map(exp => `
+          <div class="rm-res-exp-entry">
+            <div class="rm-res-exp-company">${exp.company || ''}${exp.location ? ` — ${exp.location}` : ''}</div>
+            <div class="rm-res-exp-header">
+              <span class="rm-res-exp-title">${exp.title || ''}</span>
+              <span class="rm-res-exp-dur">${exp.duration || ''}</span>
+            </div>
+            ${exp.bullets?.length ? `<ul class="rm-res-bullets">${exp.bullets.map(b => `<li>${b}</li>`).join('')}</ul>` : ''}
+          </div>`).join('')}
+      </div>` : ''}`;
   }
 
   const pageBreak = twoPage ? `<hr class="rm-page-break"/>` : '';
   const page2     = twoPage ? `${page2Content}${eduHtml}${skillHtml}` : '';
   const page1end  = twoPage ? '' : `${eduHtml}${skillHtml}`;
 
+  // Contact line in PAVAN GURAV format: Location | Phone | Email | LinkedIn
+  const contactLine = [
+    p.location,
+    p.phone,
+    p.email,
+    p.linkedin,
+    p.github
+  ].filter(Boolean).join(' | ');
+
   const html = `
-    <div class="rm-res-name">${p.name || 'Your Name'}</div>
-    <div class="rm-res-title">${p.jobtitle || resume.role_title || ''}</div>
-    <div class="rm-res-contact">${contactItems}</div>
-    <hr class="rm-res-divider"/>
+    <div class="rm-res-name">${(p.name || 'Your Name').toUpperCase()}</div>
+    <div class="rm-res-contact-line">${contactLine}</div>
     <div class="rm-res-section">
-      <div class="rm-res-section-title">Professional Summary</div>
+      <div class="rm-res-section-title">PROFESSIONAL SUMMARY</div>
       <div class="rm-res-summary">${resume.summary}</div>
     </div>
+    ${skillHtml}
     ${page1Exp}
     ${page1end}
     ${pageBreak}
@@ -2880,8 +2893,8 @@ function rmRenderResume(data) {
   doc.style.display = 'block';
   placeholder.style.display = 'none';
 
-  // Update format badge in form
-  rmUpdateFormatBadge(resume.experience_years || (twoPage ? 5 : 1));
+  // Update format badge in form (9+ years = 2 pages)
+  rmUpdateFormatBadge(resume.experience_years || (twoPage ? 10 : 1));
 
   // Fill print area
   document.getElementById('rm-print-area').innerHTML = `<div class="rm-resume-doc${twoPage ? ' two-page' : ''}">${html}</div>`;

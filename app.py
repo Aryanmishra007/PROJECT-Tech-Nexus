@@ -1394,7 +1394,8 @@ def generate_resume():
     raw_score    = kw_score + struct_score + summary_sc + contact_sc + fmt_sc + skill_sc
     ats_score    = max(91, min(98, raw_score))
 
-    two_page = exp_years >= 3 or len(enhanced_exp) >= 3
+    # Smart Format: < 9 years = 1 Page, 9+ years = 2 Pages (Senior format)
+    two_page = exp_years >= 9
 
     return jsonify({
         'resume': {
