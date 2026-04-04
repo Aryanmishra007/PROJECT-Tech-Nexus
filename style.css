@@ -239,8 +239,9 @@ input, textarea, select, button {
 }
 
 /* ── Page Visibility System ────────────────────────────────── */
-.page { display: none; position: relative; z-index: 1; }
-.page.active { display: flex; }
+.page { display: none !important; position: relative; z-index: 1; }
+.page.active { display: flex !important; }
+#app-page.active { display: block !important; }  /* app uses block, not flex */
 .screen { display: none; }
 .screen.active { display: block; animation: fadeIn 0.4s var(--transition) both; }
 
@@ -1163,7 +1164,6 @@ input, textarea, select, button {
    ══════════════════════════════════════════════════════════════ */
 
 #app-page {
-  display: block !important;
   width: 100%;
   min-height: 100vh;
   position: relative;
