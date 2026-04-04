@@ -2045,6 +2045,14 @@ function navToScreen(screenId) {
       rmLoadSkillSuggestions();
       if (rmExpCount === 0) rmAddExperience();
       if (rmEduCount === 0) rmAddEducation();
+      // Wire exp-years input to live format badge
+      setTimeout(() => {
+        const yrsInput = document.getElementById('rm-exp-years');
+        if (yrsInput && !yrsInput._wired) {
+          yrsInput._wired = true;
+          yrsInput.addEventListener('input', () => rmUpdateFormatBadge(yrsInput.value));
+        }
+      }, 100);
       break;
     case 'screen-skills':
       if (currentAnalysis) {
@@ -2482,6 +2490,104 @@ let rmExpCount = 0;
 let rmEduCount = 0;
 let rmResumeData = null;
 
+/* ── Parse old resume & auto-fill form ─────────────────── */
+async function rmParseOldResume(input) {
+  const file = input?.files?.[0];
+  if (!file) return;
+  const status  = document.getElementById('rm-parse-status');
+  const bar     = document.getElementById('rm-parse-bar');
+  const msg     = document.getElementById('rm-parse-msg');
+  const oldCard = document.getElementById('rm-upload-old');
+  if (status) status.style.display = 'flex';
+  if (oldCard) oldCard.style.opacity = '0.5';
+  if (bar) bar.classList.remove('done');
+  if (msg) msg.textContent = `Parsing "${file.name}"…`;
+  const fd = new FormData();
+  fd.append('resume', file);
+  try {
+    const res  = await fetch('/api/parse-old-resume', { method: 'POST', credentials: 'include', body: fd });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Parse failed');
+    if (bar) bar.classList.add('done');
+    if (msg) msg.textContent = '✓ Parsed! Form auto-filled — review and generate.';
+    setTimeout(() => { if (status) status.style.display = 'none'; }, 3500);
+    if (oldCard) oldCard.style.opacity = '1';
+    // Fill Personal
+    rmSetVal('rm-name',      data.name);
+    rmSetVal('rm-jobtitle',  data.job_title);
+    rmSetVal('rm-email',     data.email);
+    rmSetVal('rm-phone',     data.phone);
+    rmSetVal('rm-location',  data.location);
+    rmSetVal('rm-linkedin',  data.linkedin);
+    rmSetVal('rm-github',    data.github);
+    rmSetVal('rm-summary',   data.summary);
+    if (data.experience_years != null) rmSetVal('rm-exp-years', data.experience_years);
+    rmUpdateFormatBadge(data.experience_years || 0);
+    // Fill Skills
+    if (data.skills?.length) {
+      const ta = document.getElementById('rm-skills-input');
+      if (ta) ta.value = data.skills.join(', ');
+    }
+    // Fill Experience
+    const expList = document.getElementById('rm-exp-list');
+    if (expList && data.experience?.length) {
+      expList.innerHTML = ''; rmExpCount = 0;
+      data.experience.forEach(exp => {
+        rmAddExperience();
+        const block = document.getElementById(`rm-exp-${rmExpCount - 1}`);
+        if (!block) return;
+        rmSetInput(block, '.rm-exp-title',    exp.title    || '');
+        rmSetInput(block, '.rm-exp-company',  exp.company  || '');
+        rmSetInput(block, '.rm-exp-duration', exp.duration || '');
+        rmSetInput(block, '.rm-exp-loc',      exp.location || '');
+        rmSetInput(block, '.rm-exp-bullets',  (exp.bullets || []).join('\n'));
+      });
+    }
+    // Fill Education
+    const eduList = document.getElementById('rm-edu-list');
+    if (eduList && data.education?.length) {
+      eduList.innerHTML = ''; rmEduCount = 0;
+      data.education.forEach(edu => {
+        rmAddEducation();
+        const block = document.getElementById(`rm-edu-${rmEduCount - 1}`);
+        if (!block) return;
+        rmSetInput(block, '.rm-edu-degree', edu.degree || '');
+        rmSetInput(block, '.rm-edu-school', edu.school || '');
+        rmSetInput(block, '.rm-edu-year',   edu.year   || '');
+        rmSetInput(block, '.rm-edu-gpa',    edu.gpa    || '');
+      });
+    }
+    const firstTab = document.querySelector('.rm-tab');
+    if (firstTab) rmTab('rm-personal', firstTab);
+    showToast('Resume auto-filled from your uploaded file!', 'success', 4000);
+  } catch (err) {
+    if (bar) { bar.classList.add('done'); bar.style.background = 'var(--danger)'; }
+    if (msg) msg.textContent = err.message || 'Parse failed';
+    if (oldCard) oldCard.style.opacity = '1';
+    showToast(err.message || 'Could not parse resume. Try a DOCX file.', 'error');
+    setTimeout(() => { if (status) status.style.display = 'none'; }, 4000);
+  }
+  if (input) input.value = '';
+}
+function rmSetVal(id, val) {
+  const el = document.getElementById(id);
+  if (el && val !== undefined && val !== null && String(val).trim()) el.value = val;
+}
+function rmSetInput(block, sel, val) {
+  const el = block?.querySelector(sel);
+  if (el && val) el.value = val;
+}
+function rmUpdateFormatBadge(years) {
+  const hint  = document.getElementById('rm-format-hint');
+  const badge = document.getElementById('rm-format-badge');
+  const text  = document.getElementById('rm-format-text');
+  if (!hint) return;
+  hint.style.display = 'flex';
+  const two = parseFloat(years) >= 3;
+  if (badge) badge.className = 'rm-format-badge ' + (two ? 'two-page' : 'one-page');
+  if (text)  text.textContent = two ? '2 Pages (Senior)' : '1 Page (Standard)';
+}
+
 /* ── Tab switching ──────────────────────────────────────── */
 function rmTab(panelId, btn) {
   document.querySelectorAll('.rm-tab-panel').forEach(p => p.classList.remove('active'));
@@ -2616,7 +2722,8 @@ function rmCollectData() {
     }
   });
 
-  return { target_role: role, personal, summary, experience, education, skills };
+  const expYears = parseFloat(document.getElementById('rm-exp-years')?.value) || 0;
+  return { target_role: role, personal, summary, experience, education, skills, experience_years: expYears };
 }
 
 /* ── Generate resume ────────────────────────────────────── */
@@ -2713,30 +2820,71 @@ function rmRenderResume(data) {
     <div class="rm-res-skills-grid">${techChips}${toolChips}${softChips}</div>
   </div>`;
 
+  const twoPage = data.two_page || data.resume?.two_page || false;
+
+  // For 2-page: split experience at halfway point, put skills+certs on page 2
+  let page1Exp = expHtml, page2Content = '';
+  if (twoPage && resume.experience?.length > 2) {
+    const half = Math.ceil(resume.experience.length / 2);
+    const exp1 = resume.experience.slice(0, half);
+    const exp2 = resume.experience.slice(half);
+    page1Exp = exp1.length ? `<div class="rm-res-section">
+      <div class="rm-res-section-title">Work Experience</div>
+      ${exp1.map(exp => `
+        <div style="margin-bottom:0.75rem">
+          <div class="rm-res-exp-header">
+            <span class="rm-res-exp-title">${exp.title || ''}</span>
+            <span class="rm-res-exp-dur">${exp.duration || ''}</span>
+          </div>
+          <div class="rm-res-exp-co">${[exp.company, exp.location].filter(Boolean).join(' · ')}</div>
+          ${exp.bullets?.length ? `<ul class="rm-res-bullets">${exp.bullets.map(b => `<li>${b}</li>`).join('')}</ul>` : ''}
+        </div>`).join('<div class="rm-res-divider-thin"></div>')}
+    </div>` : '';
+    page2Content = exp2.length ? `<div class="rm-res-section">
+      <div class="rm-res-section-title">Work Experience (Continued)</div>
+      ${exp2.map(exp => `
+        <div style="margin-bottom:0.75rem">
+          <div class="rm-res-exp-header">
+            <span class="rm-res-exp-title">${exp.title || ''}</span>
+            <span class="rm-res-exp-dur">${exp.duration || ''}</span>
+          </div>
+          <div class="rm-res-exp-co">${[exp.company, exp.location].filter(Boolean).join(' · ')}</div>
+          ${exp.bullets?.length ? `<ul class="rm-res-bullets">${exp.bullets.map(b => `<li>${b}</li>`).join('')}</ul>` : ''}
+        </div>`).join('<div class="rm-res-divider-thin"></div>')}
+    </div>` : '';
+  }
+
+  const pageBreak = twoPage ? `<hr class="rm-page-break"/>` : '';
+  const page2     = twoPage ? `${page2Content}${eduHtml}${skillHtml}` : '';
+  const page1end  = twoPage ? '' : `${eduHtml}${skillHtml}`;
+
   const html = `
     <div class="rm-res-name">${p.name || 'Your Name'}</div>
-    ${p.jobtitle ? `<div class="rm-res-title">${p.jobtitle || resume.role_title}</div>` : `<div class="rm-res-title">${resume.role_title}</div>`}
+    <div class="rm-res-title">${p.jobtitle || resume.role_title || ''}</div>
     <div class="rm-res-contact">${contactItems}</div>
     <hr class="rm-res-divider"/>
-
     <div class="rm-res-section">
       <div class="rm-res-section-title">Professional Summary</div>
       <div class="rm-res-summary">${resume.summary}</div>
     </div>
-
-    ${expHtml}
-    ${eduHtml}
-    ${skillHtml}
+    ${page1Exp}
+    ${page1end}
+    ${pageBreak}
+    ${page2}
   `;
 
   const doc = document.getElementById('rm-resume-doc');
   const placeholder = document.getElementById('rm-placeholder');
   doc.innerHTML = html;
+  doc.className = 'rm-resume-doc' + (twoPage ? ' two-page' : '');
   doc.style.display = 'block';
   placeholder.style.display = 'none';
 
-  // Also fill print area
-  document.getElementById('rm-print-area').innerHTML = `<div class="rm-resume-doc">${html}</div>`;
+  // Update format badge in form
+  rmUpdateFormatBadge(resume.experience_years || (twoPage ? 5 : 1));
+
+  // Fill print area
+  document.getElementById('rm-print-area').innerHTML = `<div class="rm-resume-doc${twoPage ? ' two-page' : ''}">${html}</div>`;
 }
 
 /* ── Animate ATS score ring ─────────────────────────────── */

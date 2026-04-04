@@ -1451,6 +1451,25 @@
               <p class="text-muted fs-sm mt-1">Build an ATS-optimized resume — guaranteed 91+ score</p>
             </div>
 
+            <!-- Upload Old Resume -->
+            <div class="rm-upload-old" id="rm-upload-old">
+              <div class="rm-upload-old-icon"><i class="bi bi-file-earmark-arrow-up-fill"></i></div>
+              <div class="rm-upload-old-text">
+                <strong>Have an old resume?</strong>
+                <span>Upload PDF or DOCX — AI will parse and rebuild it</span>
+              </div>
+              <label class="btn btn-secondary btn-sm rm-upload-old-btn" for="rm-old-file-input">
+                <i class="bi bi-upload"></i> Upload
+              </label>
+              <input type="file" id="rm-old-file-input" accept=".pdf,.docx,.txt" style="display:none" onchange="rmParseOldResume(this)"/>
+            </div>
+            <div class="rm-parse-status" id="rm-parse-status" style="display:none">
+              <div class="rm-parse-progress">
+                <div class="rm-parse-bar" id="rm-parse-bar"></div>
+              </div>
+              <span id="rm-parse-msg">Parsing resume…</span>
+            </div>
+
             <!-- Tabs -->
             <div class="rm-tabs">
               <button class="rm-tab active" onclick="rmTab('rm-personal', this)"><i class="bi bi-person-fill"></i> Personal</button>
@@ -1504,6 +1523,18 @@
               <div class="rm-field">
                 <label class="rm-label">GitHub / Portfolio</label>
                 <input id="rm-github" type="text" class="rm-input" placeholder="github.com/yourname"/>
+              </div>
+              <div class="rm-row2">
+                <div class="rm-field">
+                  <label class="rm-label">Years of Experience</label>
+                  <input id="rm-exp-years" type="number" min="0" max="40" step="0.5" class="rm-input" placeholder="e.g. 5"/>
+                </div>
+                <div class="rm-field rm-format-hint" id="rm-format-hint" style="display:none">
+                  <label class="rm-label">Resume Format</label>
+                  <div class="rm-format-badge" id="rm-format-badge">
+                    <i class="bi bi-file-earmark"></i> <span id="rm-format-text">1 Page</span>
+                  </div>
+                </div>
               </div>
               <div class="rm-field">
                 <label class="rm-label">Summary <span class="rm-opt">— leave blank for AI to generate</span></label>

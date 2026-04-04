@@ -99,13 +99,25 @@ def extract_text_from_pdf(file_obj):
 
 
 def extract_text_from_docx(file_obj):
-    """Extract text content from a DOCX file object."""
+    """Extract text content from a DOCX file object (paragraphs + tables)."""
     if not HAS_DOCX:
         return ""
     try:
         doc = Document(file_obj)
-        text = "\n".join([para.text for para in doc.paragraphs])
-        return text
+        parts = []
+        # Paragraphs
+        for para in doc.paragraphs:
+            if para.text.strip():
+                parts.append(para.text.strip())
+        # Tables (many resumes use tables for layout)
+        for table in doc.tables:
+            for row in table.rows:
+                row_text = " | ".join(
+                    cell.text.strip() for cell in row.cells if cell.text.strip()
+                )
+                if row_text:
+                    parts.append(row_text)
+        return "\n".join(parts)
     except Exception as e:
         print(f"Error extracting DOCX text: {e}")
         return ""
@@ -318,3 +330,239 @@ def categorize_skills(skills):
             result['other'].append(skill)
 
     return result
+
+
+# ─────────────────────────────────────────────────────────────────
+# Structured Resume Parsing (for AI Resume Maker)
+# ─────────────────────────────────────────────────────────────────
+
+_SECTION_HEADERS = {
+    'summary':    ['summary', 'profile', 'objective', 'about me', 'professional summary',
+                   'career objective', 'personal statement', 'overview'],
+    'experience': ['experience', 'work experience', 'employment history', 'work history',
+                   'professional experience', 'career history', 'employment', 'internship',
+                   'internships', 'work'],
+    'education':  ['education', 'academic background', 'qualifications', 'academics',
+                   'educational background', 'academic qualifications'],
+    'skills':     ['skills', 'technical skills', 'core competencies', 'competencies',
+                   'technologies', 'expertise', 'key skills', 'technical expertise'],
+    'projects':   ['projects', 'key projects', 'project experience', 'personal projects'],
+    'certs':      ['certifications', 'certificates', 'awards', 'achievements', 'honors'],
+}
+
+_DATE_RE = re.compile(
+    r'\b(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|'
+    r'Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)'
+    r'[\s,\-–]+\d{4}'
+    r'|'
+    r'\d{4}\s*[-–]\s*(?:\d{4}|[Pp]resent|[Cc]urrent|[Nn]ow|[Tt]ill\s+[Dd]ate)',
+    re.IGNORECASE
+)
+
+_BULLET_RE = re.compile(r'^[\•\-\–\·\*\✓\▸\►\■\□\○\◉]\s*')
+
+
+def _is_section_header(line):
+    """Return section key if line is a section header, else None."""
+    clean = line.strip().lower().rstrip(':').strip()
+    for sec, headers in _SECTION_HEADERS.items():
+        if clean in headers or any(clean == h or clean.startswith(h + ' ') for h in headers):
+            if len(line) < 60:
+                return sec
+    return None
+
+
+def _split_into_sections(lines):
+    """Split resume lines into named sections."""
+    sections = {}
+    current = 'header'
+    buf = []
+
+    for line in lines:
+        sec = _is_section_header(line)
+        if sec:
+            if buf:
+                sections.setdefault(current, []).extend(buf)
+            current = sec
+            buf = []
+        else:
+            buf.append(line)
+
+    if buf:
+        sections.setdefault(current, []).extend(buf)
+    return sections
+
+
+def _parse_experience_entries(lines):
+    """Extract structured job entries from experience section lines."""
+    entries = []
+    current = None
+
+    for line in lines:
+        is_bullet = bool(_BULLET_RE.match(line))
+        has_date  = bool(_DATE_RE.search(line))
+
+        if is_bullet and current is not None:
+            current['bullets'].append(_BULLET_RE.sub('', line).strip())
+            continue
+
+        if has_date:
+            if current:
+                entries.append(current)
+            date_match = _DATE_RE.search(line)
+            date_str   = date_match.group(0) if date_match else ''
+            title_part = line[:date_match.start()].strip(' |–-') if date_match else line
+            current = {'title': title_part, 'company': '', 'duration': date_str,
+                       'location': '', 'bullets': []}
+            continue
+
+        if current is not None:
+            if not current['company']:
+                current['company'] = line
+            elif not current['location'] and len(line) < 40:
+                current['location'] = line
+            else:
+                current['bullets'].append(line)
+        else:
+            # Start a new entry without a date line
+            if 2 <= len(line.split()) <= 10:
+                current = {'title': line, 'company': '', 'duration': '',
+                           'location': '', 'bullets': []}
+
+    if current:
+        entries.append(current)
+    return entries
+
+
+def _parse_education_entries(lines):
+    """Extract structured education entries."""
+    entries = []
+    current = None
+
+    degree_words = ['b.tech', 'b.e', 'b.sc', 'bsc', 'bachelor', 'm.tech', 'm.sc',
+                    'msc', 'mba', 'master', 'phd', 'ph.d', 'doctorate', 'diploma',
+                    'associate', '12th', '10th', 'high school']
+
+    for line in lines:
+        line_l = line.lower()
+        is_degree = any(d in line_l for d in degree_words)
+        has_year  = bool(re.search(r'\b(19|20)\d{2}\b', line))
+
+        if is_degree:
+            if current:
+                entries.append(current)
+            current = {'degree': line, 'school': '', 'year': '', 'gpa': ''}
+        elif current:
+            if has_year and not current['year']:
+                year_m = re.search(r'\b(19|20)\d{2}\b', line)
+                current['year'] = year_m.group(0) if year_m else ''
+                if line.replace(current['year'], '').strip():
+                    current['school'] = current['school'] or line.replace(current['year'], '').strip(' ,-')
+            elif re.search(r'\b\d+\.?\d*/?\d*\s*(%|cgpa|gpa|grade|marks)', line, re.I):
+                current['gpa'] = line
+            elif not current['school']:
+                current['school'] = line
+
+    if current:
+        entries.append(current)
+    return entries
+
+
+def _extract_location(text):
+    """Try to extract city/location."""
+    cities = re.search(
+        r'\b(Mumbai|Delhi|Bangalore|Bengaluru|Hyderabad|Chennai|Pune|Kolkata|'
+        r'Ahmedabad|Jaipur|Lucknow|Noida|Gurgaon|Gurugram|Indore|Bhopal|'
+        r'New York|San Francisco|London|Singapore|Dubai|Remote|India)\b',
+        text, re.IGNORECASE
+    )
+    return cities.group(0) if cities else ''
+
+
+def _extract_linkedin(text):
+    m = re.search(r'linkedin\.com/in/[\w\-]+', text, re.IGNORECASE)
+    return m.group(0) if m else ''
+
+
+def _extract_github(text):
+    m = re.search(r'github\.com/[\w\-]+', text, re.IGNORECASE)
+    return m.group(0) if m else ''
+
+
+def _estimate_years_from_entries(entries):
+    """Calculate total experience years from parsed job entries."""
+    import datetime
+    total_months = 0
+    for e in entries:
+        dur = e.get('duration', '')
+        years_m = re.findall(r'\b(20\d{2}|19\d{2})\b', dur)
+        if len(years_m) >= 2:
+            try:
+                y1, y2 = int(years_m[0]), int(years_m[1])
+                total_months += (y2 - y1) * 12
+            except Exception:
+                pass
+        elif len(years_m) == 1 and re.search(r'present|current|now', dur, re.I):
+            try:
+                total_months += (datetime.date.today().year - int(years_m[0])) * 12
+            except Exception:
+                pass
+    return round(total_months / 12, 1) if total_months else None
+
+
+def parse_resume_structured(filepath, filename):
+    """
+    Deep-parse a resume for the AI Resume Maker.
+    Returns structured fields: personal, experience, education, skills, years.
+    """
+    try:
+        with open(filepath, 'rb') as f:
+            text = extract_text_from_file(f, filename)
+    except Exception as e:
+        print(f'[ERROR] parse_resume_structured read error: {e}')
+        return None
+
+    if not text or len(text) < 20:
+        return None
+
+    lines = [l.strip() for l in text.splitlines() if l.strip()]
+    sections = _split_into_sections(lines)
+
+    # Personal info
+    contact   = extract_contact_info(text)
+    name      = extract_name(text)
+    skills    = extract_skills_from_text(text)
+    exp_years = extract_experience_years(text)
+
+    # Structured sections
+    exp_entries = _parse_experience_entries(sections.get('experience', []))
+    edu_entries = _parse_education_entries(sections.get('education', []))
+
+    # If regex years not found, try from entries
+    if not exp_years and exp_entries:
+        exp_years = _estimate_years_from_entries(exp_entries)
+
+    # Summary text
+    summary_lines = sections.get('summary', [])
+    summary = ' '.join(summary_lines[:5]).strip()
+
+    # Job title = first experience entry title OR header line
+    job_title = ''
+    if exp_entries and exp_entries[0].get('title'):
+        job_title = exp_entries[0]['title']
+
+    return {
+        'success':  True,
+        'name':     name or '',
+        'email':    contact.get('email') or '',
+        'phone':    contact.get('phone') or '',
+        'location': _extract_location(text),
+        'linkedin': _extract_linkedin(text),
+        'github':   _extract_github(text),
+        'job_title':     job_title,
+        'summary':       summary,
+        'experience':    exp_entries,
+        'education':     edu_entries,
+        'skills':        skills,
+        'experience_years': exp_years,
+    }

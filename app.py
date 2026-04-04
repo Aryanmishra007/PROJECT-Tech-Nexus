@@ -26,7 +26,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 
 # ── Utils ──────────────────────────────────────────────────────────────
-from utils.resume_parser   import parse_resume, extract_skills_from_text
+from utils.resume_parser   import parse_resume, extract_skills_from_text, parse_resume_structured
 from utils.skill_analyzer  import analyze_skills, get_role_list, get_ats_suggestions, ROLE_REQUIREMENTS
 from utils.ai_service      import (
     get_diagnostic_questions,
@@ -1273,6 +1273,43 @@ def admin_students():
 
 
 # ═══════════════════════════════════════════════════════════════════════
+# Resume Maker — Parse Old Resume
+# ═══════════════════════════════════════════════════════════════════════
+
+@app.route('/api/parse-old-resume', methods=['POST'])
+@require_login
+def parse_old_resume():
+    """Parse an uploaded old resume and return structured data for the AI Resume Maker."""
+    file = request.files.get('resume') or request.files.get('file')
+    if not file or not file.filename:
+        return jsonify({'error': 'No file uploaded'}), 400
+
+    filename = file.filename
+    ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else ''
+    if ext not in ('pdf', 'docx', 'txt'):
+        return jsonify({'error': 'Only PDF, DOCX or TXT files are supported'}), 400
+
+    safe_name = secure_filename(filename)
+    filepath  = os.path.join(app.config['UPLOAD_FOLDER'], 'maker_' + safe_name)
+    file.save(filepath)
+
+    try:
+        result = parse_resume_structured(filepath, filename)
+        if not result:
+            return jsonify({'error': 'Could not extract content from the file. '
+                            'Try a text-based PDF or DOCX (not scanned images).'}), 422
+        return jsonify(result), 200
+    except Exception as e:
+        print(f'[ERROR] parse-old-resume: {e}')
+        return jsonify({'error': 'Parsing failed — please try a DOCX file for best results'}), 500
+    finally:
+        try:
+            os.remove(filepath)
+        except Exception:
+            pass
+
+
+# ═══════════════════════════════════════════════════════════════════════
 # AI Resume Maker
 # ═══════════════════════════════════════════════════════════════════════
 
@@ -1301,12 +1338,17 @@ def _enhance_bullet(bullet):
 @require_login
 def generate_resume():
     data = request.get_json() or {}
-    target_role   = data.get('target_role', 'ai')
-    personal      = data.get('personal', {})
-    experience    = data.get('experience', [])
-    education     = data.get('education', [])
-    user_skills   = data.get('skills', [])
-    custom_summary= data.get('summary', '').strip()
+    target_role    = data.get('target_role', 'ai')
+    personal       = data.get('personal', {})
+    experience     = data.get('experience', [])
+    education      = data.get('education', [])
+    user_skills    = data.get('skills', [])
+    custom_summary = data.get('summary', '').strip()
+    exp_years      = data.get('experience_years') or 0
+    try:
+        exp_years = float(exp_years)
+    except Exception:
+        exp_years = 0
 
     role_data  = ROLE_REQUIREMENTS.get(target_role, ROLE_REQUIREMENTS['ai'])
     role_title = role_data['title']
@@ -1352,6 +1394,8 @@ def generate_resume():
     raw_score    = kw_score + struct_score + summary_sc + contact_sc + fmt_sc + skill_sc
     ats_score    = max(91, min(98, raw_score))
 
+    two_page = exp_years >= 3 or len(enhanced_exp) >= 3
+
     return jsonify({
         'resume': {
             'personal': personal,
@@ -1363,12 +1407,15 @@ def generate_resume():
                 'tools':     tool_skills,
                 'soft':      soft_skills_list,
             },
-            'role_title': role_title,
+            'role_title':     role_title,
+            'experience_years': exp_years,
+            'two_page':       two_page,
         },
         'ats_score':        ats_score,
         'matched_keywords': len(matching),
         'total_keywords':   len(all_required),
         'role_title':       role_title,
+        'two_page':         two_page,
     }), 200
 
 

@@ -2569,6 +2569,66 @@ input, textarea, select, button {
 .rm-chip:hover { background: rgba(139,92,246,0.25); border-color: rgba(139,92,246,0.5); }
 .rm-chip.added { background: rgba(16,185,129,0.15); border-color: rgba(16,185,129,0.3); color: var(--success-light); }
 
+/* Upload old resume card */
+.rm-upload-old {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  background: linear-gradient(135deg, rgba(139,92,246,0.08), rgba(34,211,238,0.05));
+  border: 1.5px dashed rgba(139,92,246,0.35);
+  border-radius: var(--radius);
+  padding: 0.875rem 1rem;
+  transition: all var(--transition);
+}
+.rm-upload-old:hover { border-color: rgba(139,92,246,0.6); }
+.rm-upload-old-icon { font-size: 1.5rem; color: var(--accent-light); flex-shrink: 0; }
+.rm-upload-old-text { flex: 1; min-width: 0; }
+.rm-upload-old-text strong { display: block; font-size: 0.85rem; color: var(--text); }
+.rm-upload-old-text span   { font-size: 0.75rem; color: var(--muted); }
+.rm-upload-old-btn { flex-shrink: 0; cursor: pointer; }
+
+.rm-parse-status {
+  display: flex; flex-direction: column; gap: 0.375rem;
+  font-size: 0.78rem; color: var(--text-secondary);
+}
+.rm-parse-progress { height: 4px; background: rgba(255,255,255,0.06); border-radius: 999px; overflow: hidden; }
+.rm-parse-bar {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  border-radius: 999px;
+  animation: parseAnim 2s ease-in-out infinite;
+}
+@keyframes parseAnim { 0%,100% { width: 15%; } 50% { width: 85%; } }
+.rm-parse-bar.done { animation: none; width: 100%; background: var(--success); }
+
+.rm-format-badge {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.5rem 0.875rem; border-radius: var(--radius-sm);
+  font-weight: 700; font-size: 0.85rem; border: 1.5px solid;
+  margin-top: 0.25rem;
+}
+.rm-format-badge.one-page { background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.3); color: var(--success); }
+.rm-format-badge.two-page { background: rgba(139,92,246,0.1); border-color: rgba(139,92,246,0.3); color: var(--accent-light); }
+
+/* 2-page resume styles */
+.rm-resume-doc.two-page .rm-res-bullets li { font-size: 9pt; }
+.rm-page-break {
+  border: none; border-top: 2px dashed #d1d5db;
+  margin: 1.5rem 0; position: relative;
+}
+.rm-page-break::after {
+  content: 'Page 2';
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  background: #fff; padding: 0 0.75rem;
+  font-size: 8pt; color: #9ca3af; font-weight: 600;
+  letter-spacing: 0.05em; text-transform: uppercase;
+}
+@media print {
+  .rm-page-break { page-break-after: always !important; border: none; }
+  .rm-page-break::after { display: none; }
+}
+
 /* Generate button */
 .rm-generate-row {
   padding-top: 0.75rem;
