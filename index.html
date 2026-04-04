@@ -401,47 +401,122 @@
            ════════════════════════════════════════════════════ -->
       <section id="screen-dashboard" class="screen active">
 
-        <!-- Welcome Banner -->
-        <div class="welcome-banner animate-fade">
-          <h1>Welcome back, <span id="user-display-name-banner">there</span>! 👋</h1>
-          <p>Your AI-powered career development platform. Analyze skills, bridge gaps, and land your dream role.</p>
+        <!-- ── Hero Banner ─────────────────────────────────── -->
+        <div class="dash-hero animate-fade">
+          <div class="dash-orb dash-orb-1"></div>
+          <div class="dash-orb dash-orb-2"></div>
+          <div class="dash-orb dash-orb-3"></div>
+          <div class="dash-hero-inner">
+            <div class="dash-hero-text">
+              <div class="dash-badge"><i class="bi bi-stars"></i> AI-Powered Career Platform</div>
+              <h1 class="dash-hero-title">
+                <span id="dash-greeting">Welcome back</span>,<br/>
+                <span class="dash-hero-name" id="user-display-name-banner">there</span>!
+              </h1>
+              <p class="dash-hero-desc">Ready to accelerate your career? Analyze your skills, get a personalized learning path, and ace your next interview.</p>
+              <div class="dash-hero-btns">
+                <button class="btn btn-primary btn-glow" onclick="navToScreen('screen-upload')">
+                  <i class="bi bi-cloud-upload-fill"></i> Upload Resume
+                </button>
+                <button class="btn btn-ghost-glow" onclick="navToScreen('screen-skills')">
+                  <i class="bi bi-graph-up-arrow"></i> View Analysis
+                </button>
+              </div>
+              <div class="dash-mini-stats">
+                <div class="dash-mini-stat">
+                  <span class="dash-mini-val" id="stat-resumes">0</span>
+                  <span class="dash-mini-label">Resumes</span>
+                </div>
+                <div class="dash-mini-div"></div>
+                <div class="dash-mini-stat">
+                  <span class="dash-mini-val" id="stat-skills">0</span>
+                  <span class="dash-mini-label">Skills Found</span>
+                </div>
+                <div class="dash-mini-div"></div>
+                <div class="dash-mini-stat">
+                  <span class="dash-mini-val" id="stat-interviews">0</span>
+                  <span class="dash-mini-label">Interviews</span>
+                </div>
+              </div>
+            </div>
+            <div class="dash-hero-visual">
+              <div class="dash-ring-wrap">
+                <svg class="dash-ring-svg" viewBox="0 0 160 160" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stop-color="#8b5cf6"/>
+                      <stop offset="100%" stop-color="#22d3ee"/>
+                    </linearGradient>
+                  </defs>
+                  <circle cx="80" cy="80" r="66" fill="none" stroke="rgba(139,92,246,0.08)" stroke-width="12"/>
+                  <circle cx="80" cy="80" r="66" fill="none" stroke="url(#ringGrad)" stroke-width="12"
+                    stroke-linecap="round" stroke-dasharray="415" stroke-dashoffset="415"
+                    class="dash-ring-arc" transform="rotate(-90 80 80)"/>
+                </svg>
+                <div class="dash-ring-center">
+                  <span class="dash-ring-val" id="stat-match">0%</span>
+                  <span class="dash-ring-label">AI Match</span>
+                </div>
+                <div class="dash-ring-badge"><i class="bi bi-cpu-fill"></i></div>
+              </div>
+              <div class="dash-ring-caption">Your skill match score</div>
+            </div>
+          </div>
         </div>
 
-        <!-- Stat Cards -->
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-icon stat-icon-purple"><i class="bi bi-file-earmark-person-fill"></i></div>
-            <div class="stat-label">Resumes Analyzed</div>
-            <div class="stat-value" id="stat-resumes">0</div>
-            <div class="stat-change up"><i class="bi bi-arrow-up-short"></i> All time</div>
+        <!-- ── Feature Shortcut Cards ──────────────────────── -->
+        <div class="dash-features">
+          <div class="dash-feat-card" onclick="navToScreen('screen-upload')">
+            <div class="dash-feat-icon feat-purple"><i class="bi bi-file-earmark-person-fill"></i></div>
+            <div class="dash-feat-body">
+              <h4>Upload Resume</h4>
+              <p>AI parses &amp; extracts your skills</p>
+            </div>
+            <i class="bi bi-arrow-right-circle-fill dash-feat-arrow"></i>
           </div>
-          <div class="stat-card">
-            <div class="stat-icon stat-icon-cyan"><i class="bi bi-bullseye"></i></div>
-            <div class="stat-label">Best Match Score</div>
-            <div class="stat-value" id="stat-match">0%</div>
-            <div class="stat-change up"><i class="bi bi-arrow-up-short"></i> Latest result</div>
+          <div class="dash-feat-card" onclick="navToScreen('screen-skills')">
+            <div class="dash-feat-icon feat-cyan"><i class="bi bi-bar-chart-line-fill"></i></div>
+            <div class="dash-feat-body">
+              <h4>Skill Report</h4>
+              <p>See your gap &amp; match score</p>
+            </div>
+            <i class="bi bi-arrow-right-circle-fill dash-feat-arrow"></i>
           </div>
-          <div class="stat-card">
-            <div class="stat-icon stat-icon-amber"><i class="bi bi-tools"></i></div>
-            <div class="stat-label">Skills Tracked</div>
-            <div class="stat-value" id="stat-skills">0</div>
-            <div class="stat-change up"><i class="bi bi-arrow-up-short"></i> Identified</div>
+          <div class="dash-feat-card" onclick="navToScreen('screen-learning')">
+            <div class="dash-feat-icon feat-amber"><i class="bi bi-mortarboard-fill"></i></div>
+            <div class="dash-feat-body">
+              <h4>Learning Path</h4>
+              <p>AI roadmap to your dream role</p>
+            </div>
+            <i class="bi bi-arrow-right-circle-fill dash-feat-arrow"></i>
           </div>
-          <div class="stat-card">
-            <div class="stat-icon stat-icon-green"><i class="bi bi-person-check-fill"></i></div>
-            <div class="stat-label">Interviews Done</div>
-            <div class="stat-value" id="stat-interviews">0</div>
-            <div class="stat-change up"><i class="bi bi-arrow-up-short"></i> Practice sessions</div>
+          <div class="dash-feat-card" onclick="navToScreen('screen-interview')">
+            <div class="dash-feat-icon feat-green"><i class="bi bi-mic-fill"></i></div>
+            <div class="dash-feat-body">
+              <h4>Mock Interview</h4>
+              <p>AI-graded practice sessions</p>
+            </div>
+            <i class="bi bi-arrow-right-circle-fill dash-feat-arrow"></i>
+          </div>
+          <div class="dash-feat-card" onclick="navToScreen('screen-ats')">
+            <div class="dash-feat-icon feat-pink"><i class="bi bi-file-check-fill"></i></div>
+            <div class="dash-feat-body">
+              <h4>ATS Optimizer</h4>
+              <p>Beat applicant tracking systems</p>
+            </div>
+            <i class="bi bi-arrow-right-circle-fill dash-feat-arrow"></i>
           </div>
         </div>
 
-        <!-- Quick Analyze -->
-        <div class="quick-analyze-card">
-          <div class="section-header">
-            <div class="section-title"><i class="bi bi-lightning-charge-fill"></i> Quick Skill Analysis</div>
+        <!-- ── Quick Analyze ───────────────────────────────── -->
+        <div class="dash-analyze-card">
+          <div class="dash-analyze-header">
+            <div>
+              <div class="section-title"><i class="bi bi-lightning-charge-fill"></i> Quick Skill Analysis</div>
+              <p class="text-muted fs-sm mt-1">Pick your target role and instantly see how you match up.</p>
+            </div>
           </div>
-          <p class="text-muted fs-sm mb-4">Select a target role and instantly see how your skills match up against industry requirements.</p>
-          <div class="flex items-center gap-3 flex-wrap">
+          <div class="dash-analyze-row">
             <select id="target-role" class="role-select" aria-label="Select target role">
               <option value="">— Select Target Role —</option>
               <option value="ai">AI Engineer</option>
@@ -459,31 +534,45 @@
           </div>
         </div>
 
-        <!-- Recent Activity -->
-        <div class="section-header mt-4">
-          <div class="section-title"><i class="bi bi-clock-history"></i> Recent Activity</div>
-        </div>
-        <div class="activity-list" id="activity-list">
-          <div class="activity-item">
-            <div class="activity-icon stat-icon-purple"><i class="bi bi-cpu-fill"></i></div>
-            <div class="activity-text">
-              <strong>NexaAI platform ready</strong> — Upload your resume to get started
+        <!-- ── Activity Timeline ──────────────────────────── -->
+        <div class="dash-activity-section">
+          <div class="section-title mb-4"><i class="bi bi-clock-history"></i> Recent Activity</div>
+          <div class="dash-timeline" id="activity-list">
+            <div class="dash-tl-item">
+              <div class="dash-tl-dot dot-purple"></div>
+              <div class="dash-tl-line"></div>
+              <div class="dash-tl-card">
+                <div class="dash-tl-icon stat-icon-purple"><i class="bi bi-cpu-fill"></i></div>
+                <div class="dash-tl-body">
+                  <strong>NexaAI platform ready</strong>
+                  <span>Upload your resume to get started</span>
+                </div>
+                <span class="dash-tl-time">Just now</span>
+              </div>
             </div>
-            <span class="activity-time">Just now</span>
-          </div>
-          <div class="activity-item">
-            <div class="activity-icon stat-icon-cyan"><i class="bi bi-info-circle"></i></div>
-            <div class="activity-text">
-              Supports AI Engineer, Data Analyst, Web Developer, ML Engineer, DevOps roles
+            <div class="dash-tl-item">
+              <div class="dash-tl-dot dot-cyan"></div>
+              <div class="dash-tl-line"></div>
+              <div class="dash-tl-card">
+                <div class="dash-tl-icon stat-icon-cyan"><i class="bi bi-info-circle-fill"></i></div>
+                <div class="dash-tl-body">
+                  <strong>5 career roles supported</strong>
+                  <span>AI Engineer · Data Analyst · Web Dev · ML Engineer · DevOps</span>
+                </div>
+                <span class="dash-tl-time">Today</span>
+              </div>
             </div>
-            <span class="activity-time">Today</span>
-          </div>
-          <div class="activity-item">
-            <div class="activity-icon stat-icon-green"><i class="bi bi-lightbulb-fill"></i></div>
-            <div class="activity-text">
-              Get personalized learning paths, mock interviews &amp; ATS optimization tips
+            <div class="dash-tl-item">
+              <div class="dash-tl-dot dot-green"></div>
+              <div class="dash-tl-card">
+                <div class="dash-tl-icon stat-icon-green"><i class="bi bi-lightbulb-fill"></i></div>
+                <div class="dash-tl-body">
+                  <strong>Full AI toolkit active</strong>
+                  <span>Learning paths, mock interviews &amp; ATS optimization</span>
+                </div>
+                <span class="dash-tl-time">Today</span>
+              </div>
             </div>
-            <span class="activity-time">Today</span>
           </div>
         </div>
 

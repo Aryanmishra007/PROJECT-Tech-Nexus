@@ -517,27 +517,35 @@ async function checkAuth() {
 
 async function loadDashboard() {
   // Update display name
-  const nameEl = document.getElementById('user-display-name');
-  const avatarEl = document.getElementById('user-avatar-initials');
-  const sidebarNameEl = document.getElementById('sidebar-user-name');
-  const sidebarRoleEl = document.getElementById('sidebar-user-role');
+  const nameEl       = document.getElementById('user-display-name');
+  const bannerNameEl = document.getElementById('user-display-name-banner');
+  const avatarEl     = document.getElementById('user-avatar-initials');
+  const sidebarNameEl= document.getElementById('sidebar-user-name');
+  const sidebarRoleEl= document.getElementById('sidebar-user-role');
+  const greetingEl   = document.getElementById('dash-greeting');
 
   const name = currentUser?.name || currentUser?.email?.split('@')[0] || 'User';
   const role = currentUser?.role || 'student';
-  
-  if (nameEl) nameEl.textContent = name;
+
+  if (nameEl)        nameEl.textContent = name;
+  if (bannerNameEl)  bannerNameEl.textContent = name;
   if (sidebarNameEl) sidebarNameEl.textContent = name;
-  if (avatarEl) avatarEl.textContent = name.charAt(0).toUpperCase();
+  if (avatarEl)      avatarEl.textContent = name.charAt(0).toUpperCase();
   if (sidebarRoleEl) sidebarRoleEl.textContent = role === 'admin' ? 'Admin' : 'Student';
-  
+
+  // Time-based greeting
+  if (greetingEl) {
+    const hour = new Date().getHours();
+    greetingEl.textContent = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  }
+
   // Show/hide admin section based on role
   updateAdminAccess(role);
-  
-  // Add pulse animation to analyze button to attract attention
+
+  // Add pulse animation to analyze button
   const analyzeBtn = document.getElementById('analyze-btn');
   if (analyzeBtn) {
     analyzeBtn.classList.add('btn-pulse');
-    // Remove pulse after first click
     analyzeBtn.addEventListener('click', () => {
       analyzeBtn.classList.remove('btn-pulse');
     }, { once: true });
@@ -549,7 +557,6 @@ async function loadDashboard() {
       const data = await res.json();
       updateStatCards(data);
     } else {
-      // Show placeholder values
       updateStatCards({ resumes: 0, match_score: 0, skills: 0, interviews: 0 });
     }
   } catch (_) {
@@ -572,10 +579,19 @@ function updateAdminAccess(role) {
 }
 
 function updateStatCards(data) {
-  animateNumber('stat-resumes',    data.resumes    ?? 0);
-  animateNumber('stat-match',      data.match_score?? 0, '%');
-  animateNumber('stat-skills',     data.skills     ?? 0);
-  animateNumber('stat-interviews', data.interviews ?? 0);
+  animateNumber('stat-resumes',    data.resumes     ?? 0);
+  animateNumber('stat-match',      data.match_score ?? 0, '%');
+  animateNumber('stat-skills',     data.skills      ?? 0);
+  animateNumber('stat-interviews', data.interviews  ?? 0);
+
+  // Animate score ring arc (total circumference = 415)
+  const arc = document.querySelector('.dash-ring-arc');
+  if (arc) {
+    const score = Math.min(100, Math.max(0, data.match_score ?? 0));
+    const circumference = 415;
+    const offset = circumference - (score / 100) * circumference;
+    setTimeout(() => { arc.style.strokeDashoffset = offset; }, 200);
+  }
 }
 
 /* ══════════════════════════════════════════════════════════════
