@@ -25,6 +25,19 @@ from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 
+# ── Google Gemini AI ───────────────────────────────────────────────────
+try:
+    import google.generativeai as genai
+    GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', 'AIzaSyDBHsJMFA75VjCfIVEniToTdJ53Uw7QkHw')
+    genai.configure(api_key=GEMINI_API_KEY)
+    GEMINI_MODEL = genai.GenerativeModel('gemini-1.5-flash')
+    GEMINI_AVAILABLE = True
+    print('[NexaAI] Gemini AI initialized successfully')
+except Exception as e:
+    GEMINI_AVAILABLE = False
+    GEMINI_MODEL = None
+    print(f'[NexaAI] Gemini AI not available: {e}')
+
 # ── Utils ──────────────────────────────────────────────────────────────
 from utils.resume_parser   import parse_resume, extract_skills_from_text, parse_resume_structured
 from utils.skill_analyzer  import analyze_skills, get_role_list, get_ats_suggestions, ROLE_REQUIREMENTS
@@ -905,6 +918,67 @@ def ats_suggestions():
     except Exception as e:
         print(f'[ERROR] ATS suggestions error: {e}')
         return jsonify({'error': str(e)}), 500
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# AI Chatbot (Gemini)
+# ═══════════════════════════════════════════════════════════════════════
+
+@app.route('/api/chat', methods=['POST'])
+@require_login
+def chat_with_ai():
+    """Chat with AI assistant powered by Google Gemini"""
+    data = request.get_json() or {}
+    user_message = data.get('message', '').strip()
+    conversation_history = data.get('history', [])
+    
+    if not user_message:
+        return jsonify({'error': 'Message is required'}), 400
+    
+    if len(user_message) > 2000:
+        return jsonify({'error': 'Message too long (max 2000 characters)'}), 400
+    
+    if not GEMINI_AVAILABLE:
+        return jsonify({'error': 'AI service temporarily unavailable'}), 503
+    
+    try:
+        # Build context with user info and conversation history
+        user_name = session.get('user_name', 'User')
+        
+        system_prompt = f"""You are NexaAI Assistant, a helpful career and skills advisor for the NexaAI platform.
+Your role is to help users with:
+- Career guidance and skill development advice
+- Resume writing and optimization tips
+- Interview preparation and practice
+- Technical questions related to their learning path
+- Job search strategies
+
+Be friendly, professional, and concise. Keep responses under 200 words unless the user asks for more detail.
+The user's name is {user_name}. Address them by name occasionally to be personable.
+
+If asked about topics unrelated to career/skills/learning, politely redirect the conversation to career-related topics."""
+
+        # Build conversation context
+        messages = [system_prompt]
+        for msg in conversation_history[-10:]:  # Keep last 10 messages for context
+            role = "User" if msg.get('role') == 'user' else "Assistant"
+            messages.append(f"{role}: {msg.get('content', '')}")
+        messages.append(f"User: {user_message}")
+        
+        full_prompt = "\n\n".join(messages)
+        
+        # Generate response
+        response = GEMINI_MODEL.generate_content(full_prompt)
+        ai_response = response.text.strip()
+        
+        return jsonify({
+            'response': ai_response,
+            'success': True
+        }), 200
+        
+    except Exception as e:
+        print(f'[ERROR] Chat error: {e}')
+        return jsonify({'error': 'Failed to generate response. Please try again.'}), 500
 
 
 @app.route('/api/user', methods=['GET'])

@@ -1758,6 +1758,42 @@
   </div>
 </div>
 
+<!-- AI Chatbot Widget -->
+<div id="chatbot-widget" class="chatbot-widget">
+  <button id="chatbot-toggle" class="chatbot-toggle" onclick="toggleChatbot()" aria-label="Open AI assistant">
+    <i class="bi bi-robot"></i>
+    <span class="chatbot-pulse"></span>
+  </button>
+  
+  <div id="chatbot-window" class="chatbot-window hidden">
+    <div class="chatbot-header">
+      <div class="chatbot-title">
+        <i class="bi bi-robot"></i>
+        <span>NexaAI Assistant</span>
+        <span class="chatbot-status">Online</span>
+      </div>
+      <button class="chatbot-close" onclick="toggleChatbot()" aria-label="Close chat">&times;</button>
+    </div>
+    
+    <div id="chatbot-messages" class="chatbot-messages">
+      <div class="chat-message bot">
+        <div class="chat-avatar"><i class="bi bi-robot"></i></div>
+        <div class="chat-bubble">
+          Hi! I'm your AI career assistant. Ask me about skills, resumes, interviews, or career advice! 🚀
+        </div>
+      </div>
+    </div>
+    
+    <div class="chatbot-input-area">
+      <input type="text" id="chatbot-input" placeholder="Type your message..." 
+             onkeypress="if(event.key==='Enter')sendChatMessage()">
+      <button id="chatbot-send" onclick="sendChatMessage()" aria-label="Send message">
+        <i class="bi bi-send-fill"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- App Script -->
 <script src="script.js"></script>
 

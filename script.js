@@ -18,6 +18,8 @@ let isRecording = false;
 let selectedFile = null;
 let selectedDiagnosticOption = null;
 let diagnosticScore = 0;
+let chatHistory = [];
+let isChatbotOpen = false;
 
 // Role display names
 const ROLE_LABELS = {
@@ -444,7 +446,6 @@ async function handleLogin() {
   } catch (err) {
     // Show clear error message to user
     const errorMsg = err.message || 'Invalid email or password.';
-    console.log('[Login Error]', errorMsg);
     showToast(errorMsg, 'error', 5000);
   } finally {
     setButtonLoading(btn, false, 'Sign In');
@@ -1110,11 +1111,13 @@ async function importGitHubSkills() {
 }
 
 // Start diagnostic test for a specific skill
-async function startDiagnosticForSkill(skill) {
+async function startDiagnosticForSkill(skill, skipNav = false) {
   if (!skill) return;
   
   showToast(`Starting test for: ${skill}`, 'info');
-  navToScreen('screen-diagnostic');
+  if (!skipNav) {
+    navToScreen('screen-diagnostic');
+  }
   
   const container = document.getElementById('diag-question-card');
   if (container) {
@@ -1420,8 +1423,6 @@ async function loadInterviewQuestions(role) {
   currentQuestionIndex = 0;
   interviewAnswers = [];
 
-  console.log('[Interview] Loading questions for role:', role);
-
   // Show loading state in question text, not by replacing the whole card
   const qText = document.getElementById('q-text');
   const qNum = document.getElementById('q-num');
@@ -1436,8 +1437,6 @@ async function loadInterviewQuestions(role) {
       body: JSON.stringify({ role })
     });
     
-    console.log('[Interview] API response status:', res.status);
-    
     // Handle auth errors
     if (res.status === 401) {
       showToast('Please log in to access mock interviews', 'error');
@@ -1446,12 +1445,10 @@ async function loadInterviewQuestions(role) {
     }
     
     const data = await res.json();
-    console.log('[Interview] API response data:', data);
 
     if (!res.ok) throw new Error(data.error || 'Failed to load questions');
 
     interviewQuestions = data.questions || [];
-    console.log('[Interview] Questions loaded:', interviewQuestions.length);
     
     if (interviewQuestions.length === 0) throw new Error('No questions available');
 
@@ -1516,8 +1513,6 @@ async function submitAnswer() {
   const answerBox = document.getElementById('answer-box');
   const answer = answerBox?.value?.trim();
 
-  console.log('[Interview] Submitting answer, length:', answer?.length);
-
   if (!answer) {
     showToast('Please write an answer before submitting', 'error');
     return;
@@ -1531,7 +1526,6 @@ async function submitAnswer() {
   }
 
   const question = interviewQuestions[currentQuestionIndex];
-  console.log('[Interview] Current question:', question);
   
   if (!question) {
     showToast('No question loaded. Click "New Set" to load questions.', 'error');
@@ -1545,7 +1539,6 @@ async function submitAnswer() {
   setButtonLoading(btn, true, 'Getting Feedback...');
 
   try {
-    console.log('[Interview] Calling /api/submit-answer');
     const res = await fetch('/api/submit-answer', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1558,8 +1551,6 @@ async function submitAnswer() {
       })
     });
     
-    console.log('[Interview] Submit response status:', res.status);
-    
     // Handle auth errors
     if (res.status === 401) {
       showToast('Session expired. Please log in again.', 'error');
@@ -1568,14 +1559,12 @@ async function submitAnswer() {
     }
     
     const data = await res.json();
-    console.log('[Interview] Submit response data:', data);
 
     if (!res.ok) throw new Error(data.error || 'Feedback failed');
 
     displayFeedback(data.feedback);
     updateQProgress();
   } catch (err) {
-    console.error('[Interview] Submit error:', err);
     showToast(err.message || 'Could not get feedback. Check your connection.', 'error');
   } finally {
     setButtonLoading(btn, false, '<i class="bi bi-send-fill"></i> Submit Answer');
@@ -1918,8 +1907,6 @@ function showToast(message, type = 'info', duration = 3500) {
   `;
 
   container.appendChild(toast);
-  
-  console.log('[Toast]', type, message);
 
   // Auto dismiss after specified duration
   const timer = setTimeout(() => {
@@ -2068,10 +2055,10 @@ function navToScreen(screenId) {
       if (!diagnosticQuestions || diagnosticQuestions.length === 0) {
         const missingSkills = currentAnalysis?.skills_missing || [];
         if (missingSkills.length > 0) {
-          startDiagnosticForSkill(missingSkills[0]);
+          startDiagnosticForSkill(missingSkills[0], true);
         } else {
           // Default to Python if no analysis
-          startDiagnosticForSkill('Python');
+          startDiagnosticForSkill('Python', true);
         }
       }
       break;
@@ -2167,6 +2154,127 @@ function launchConfetti() {
     document.body.appendChild(el);
     setTimeout(() => el.remove(), 5000);
   }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   AI CHATBOT
+   ══════════════════════════════════════════════════════════════ */
+
+function toggleChatbot() {
+  const window = document.getElementById('chatbot-window');
+  const toggle = document.getElementById('chatbot-toggle');
+  
+  isChatbotOpen = !isChatbotOpen;
+  
+  if (isChatbotOpen) {
+    window.classList.remove('hidden');
+    toggle.innerHTML = '<i class="bi bi-x-lg"></i>';
+    document.getElementById('chatbot-input').focus();
+  } else {
+    window.classList.add('hidden');
+    toggle.innerHTML = '<i class="bi bi-robot"></i><span class="chatbot-pulse"></span>';
+  }
+}
+
+async function sendChatMessage() {
+  const input = document.getElementById('chatbot-input');
+  const sendBtn = document.getElementById('chatbot-send');
+  const message = input.value.trim();
+  
+  if (!message) return;
+  
+  // Disable input while processing
+  input.disabled = true;
+  sendBtn.disabled = true;
+  
+  // Add user message to UI
+  addChatMessage(message, 'user');
+  input.value = '';
+  
+  // Add to history
+  chatHistory.push({ role: 'user', content: message });
+  
+  // Show typing indicator
+  const typingId = showTypingIndicator();
+  
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        message: message,
+        history: chatHistory.slice(-10)
+      })
+    });
+    
+    const data = await res.json();
+    
+    // Remove typing indicator
+    removeTypingIndicator(typingId);
+    
+    if (!res.ok) throw new Error(data.error || 'Failed to get response');
+    
+    // Add bot response
+    addChatMessage(data.response, 'bot');
+    chatHistory.push({ role: 'assistant', content: data.response });
+    
+  } catch (err) {
+    removeTypingIndicator(typingId);
+    addChatMessage('Sorry, I encountered an error. Please try again.', 'bot');
+  } finally {
+    input.disabled = false;
+    sendBtn.disabled = false;
+    input.focus();
+  }
+}
+
+function addChatMessage(text, sender) {
+  const container = document.getElementById('chatbot-messages');
+  const msgDiv = document.createElement('div');
+  msgDiv.className = `chat-message ${sender}`;
+  
+  const avatar = sender === 'bot' 
+    ? '<i class="bi bi-robot"></i>' 
+    : '<i class="bi bi-person-fill"></i>';
+  
+  msgDiv.innerHTML = `
+    <div class="chat-avatar">${avatar}</div>
+    <div class="chat-bubble">${escapeHtml(text)}</div>
+  `;
+  
+  container.appendChild(msgDiv);
+  container.scrollTop = container.scrollHeight;
+}
+
+function showTypingIndicator() {
+  const container = document.getElementById('chatbot-messages');
+  const typingDiv = document.createElement('div');
+  const id = 'typing-' + Date.now();
+  typingDiv.id = id;
+  typingDiv.className = 'chat-message bot';
+  typingDiv.innerHTML = `
+    <div class="chat-avatar"><i class="bi bi-robot"></i></div>
+    <div class="chat-bubble">
+      <div class="chat-typing">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+  `;
+  container.appendChild(typingDiv);
+  container.scrollTop = container.scrollHeight;
+  return id;
+}
+
+function removeTypingIndicator(id) {
+  const el = document.getElementById(id);
+  if (el) el.remove();
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -2308,7 +2416,7 @@ function initializeStripeCardElement() {
         }
       });
     } catch (err) {
-      console.log('Stripe initialization error:', err);
+      // Stripe init failed - card payments unavailable
     }
   }
 }
