@@ -790,11 +790,17 @@ def get_roles():
 @require_login
 def interview_questions():
     """Get interview questions for selected role"""
+    VALID_ROLES = list(ROLE_REQUIREMENTS.keys())
+    
     if request.method == 'POST':
         data = request.get_json()
         role = data.get('role', 'ai')
     else:
         role = request.args.get('role', 'ai')
+    
+    # Validate role
+    if role not in VALID_ROLES:
+        return jsonify({'error': f'Invalid role. Must be one of: {", ".join(VALID_ROLES)}'}), 400
     
     try:
         questions = get_interview_questions(role)

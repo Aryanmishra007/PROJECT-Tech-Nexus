@@ -1652,11 +1652,11 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <!-- Payment Modal -->
-<div id="payment-modal" class="modal-overlay hidden">
+<div id="payment-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="payment-modal-title">
   <div class="modal-content payment-modal">
     <div class="modal-header">
-      <h3><i class="bi bi-credit-card-fill"></i> Complete Payment</h3>
-      <button class="modal-close" onclick="closePaymentModal()">&times;</button>
+      <h3 id="payment-modal-title"><i class="bi bi-credit-card-fill"></i> Complete Payment</h3>
+      <button class="modal-close" onclick="closePaymentModal()" aria-label="Close payment modal">&times;</button>
     </div>
     <div class="modal-body">
       <div class="payment-summary">
