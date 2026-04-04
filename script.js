@@ -1167,19 +1167,16 @@ async function startDiagnosticForSkill(skill, skipNav = false) {
    ══════════════════════════════════════════════════════════════ */
 
 async function startDiagnosticTest() {
-  if (!currentAnalysis) {
-    showToast('Please analyze your skills first', 'error');
-    return;
+  // Default to Python if no analysis or no missing skills
+  let skill = 'python';
+  
+  if (currentAnalysis) {
+    const missingSkills = currentAnalysis.skills_missing || [];
+    if (missingSkills.length > 0) {
+      skill = missingSkills[0];  // Use first missing skill if available
+    }
   }
 
-  const missingSkills = currentAnalysis.skills_missing || [];
-  if (missingSkills.length === 0) {
-    showToast('No missing skills to test! You have great coverage.', 'info');
-    return;
-  }
-
-  // Pick the first missing skill with questions available
-  const skill = missingSkills[0];
   const btn = document.getElementById('start-diagnostic-btn');
   setButtonLoading(btn, true, 'Loading Test...');
 
@@ -1187,16 +1184,27 @@ async function startDiagnosticTest() {
     const res = await fetch(`/api/diagnostic-test/${encodeURIComponent(skill)}`, {
       credentials: 'include'
     });
+    
+    if (!res.ok) {
+      if (res.status === 401) {
+        throw new Error('Your session expired. Please log in again.');
+      }
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || 'Failed to load diagnostic test');
+    }
+    
     const data = await res.json();
 
-    if (!res.ok) throw new Error(data.error || 'Failed to load diagnostic');
-
     diagnosticQuestions = data.questions || [];
+    if (diagnosticQuestions.length === 0) {
+      throw new Error('No questions available for this skill');
+    }
+
     diagnosticAnswers = new Array(diagnosticQuestions.length).fill(null);
     diagnosticScore = 0;
 
     showScreen('screen-diagnostic');
-    setTextContent('diagnostic-skill-name', capitalize(skill));
+    setTextContent('diagnostic-skill-name', capitalize(data.skill || skill));
     loadDiagnosticQuestion(0);
     showToast(`Diagnostic test: ${capitalize(skill)}`, 'info');
   } catch (err) {
