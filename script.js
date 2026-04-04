@@ -2207,13 +2207,28 @@ async function sendChatMessage() {
         history: chatHistory.slice(-10)
       })
     });
-    
-    const data = await res.json();
+
+    const raw = await res.text();
+    let data = {};
+    try {
+      data = raw ? JSON.parse(raw) : {};
+    } catch (_) {
+      data = {};
+    }
     
     // Remove typing indicator
     removeTypingIndicator(typingId);
-    
-    if (!res.ok) throw new Error(data.error || 'Failed to get response');
+
+    if (!res.ok) {
+      if (res.status === 401) {
+        throw new Error('Your session expired. Please log in again.');
+      }
+      throw new Error(data.error || 'Failed to get response');
+    }
+
+    if (!data.response || typeof data.response !== 'string') {
+      throw new Error('AI response was empty. Please try again.');
+    }
     
     // Add bot response
     addChatMessage(data.response, 'bot');
@@ -2221,7 +2236,7 @@ async function sendChatMessage() {
     
   } catch (err) {
     removeTypingIndicator(typingId);
-    addChatMessage('Sorry, I encountered an error. Please try again.', 'bot');
+    addChatMessage(err.message || 'Sorry, I encountered an error. Please try again.', 'bot');
   } finally {
     input.disabled = false;
     sendBtn.disabled = false;

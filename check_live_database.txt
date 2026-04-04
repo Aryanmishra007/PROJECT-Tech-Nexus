@@ -1,0 +1,33 @@
+"""
+Check Live Website Database Status
+Open this URL in browser to see what database your live site is using
+"""
+
+# Add this endpoint to your app.py to check database status remotely
+
+# Paste this in app.py after line 90 (before any routes):
+
+@app.route('/api/system/info')
+def system_info():
+    """Check what database mode is active"""
+    db_mode = "MySQL" if USE_MYSQL else "SQLite"
+    
+    info = {
+        'database_mode': db_mode,
+        'timestamp': datetime.now().isoformat()
+    }
+    
+    if USE_MYSQL:
+        info['mysql_config'] = {
+            'host': MYSQL_CONFIG['host'],
+            'port': MYSQL_CONFIG['port'],
+            'database': MYSQL_CONFIG['database'],
+            'user': MYSQL_CONFIG['user']
+        }
+    else:
+        info['sqlite_path'] = SQLITE_PATH
+    
+    return jsonify(info), 200
+
+# Then visit: https://your-live-site.com/api/system/info
+# It will show exactly what database is being used!

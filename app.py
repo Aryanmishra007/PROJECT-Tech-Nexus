@@ -924,6 +924,34 @@ def ats_suggestions():
 # AI Chatbot (Gemini)
 # ═══════════════════════════════════════════════════════════════════════
 
+def _local_chat_fallback(user_message, user_name='User'):
+    """Return a lightweight career-focused fallback response when AI provider is unavailable."""
+    msg = (user_message or '').strip().lower()
+
+    if msg in {'hi', 'hii', 'hello', 'hey', 'good morning', 'good evening'}:
+        return (
+            f"Hi {user_name}! I can help with AI/ML skill planning, resume tips, interview prep, "
+            "and learning roadmaps. Tell me your current level and target role."
+        )
+
+    ai_ml_keywords = [
+        'ai', 'ml', 'machine learning', 'deep learning', 'data science',
+        'nlp', 'computer vision', 'genai', 'llm'
+    ]
+    if any(k in msg for k in ai_ml_keywords):
+        return (
+            "Great choice. To build strong AI/ML skills, follow this order: "
+            "1) Python + SQL basics, 2) Statistics and probability, "
+            "3) Machine learning with scikit-learn, 4) Deep learning with PyTorch/TensorFlow, "
+            "5) Projects (NLP/CV), 6) Resume + GitHub portfolio. "
+            "Share your current skill level and I will create a 30-day plan."
+        )
+
+    return (
+        "I can assist with career and skill growth: skill-gap guidance, learning paths, "
+        "resume optimization, and interview preparation. Ask me about a role, topic, or study plan."
+    )
+
 @app.route('/api/chat', methods=['POST'])
 @require_login
 def chat_with_ai():
@@ -939,7 +967,11 @@ def chat_with_ai():
         return jsonify({'error': 'Message too long (max 2000 characters)'}), 400
     
     if not GEMINI_AVAILABLE:
-        return jsonify({'error': 'AI service temporarily unavailable'}), 503
+        return jsonify({
+            'response': _local_chat_fallback(user_message, session.get('user_name', 'User')),
+            'success': True,
+            'fallback': True
+        }), 200
     
     try:
         # Build context with user info and conversation history
@@ -969,7 +1001,10 @@ If asked about topics unrelated to career/skills/learning, politely redirect the
         
         # Generate response
         response = GEMINI_MODEL.generate_content(full_prompt)
-        ai_response = response.text.strip()
+        ai_response = (getattr(response, 'text', None) or '').strip()
+
+        if not ai_response:
+            ai_response = _local_chat_fallback(user_message, user_name)
         
         return jsonify({
             'response': ai_response,
@@ -978,7 +1013,11 @@ If asked about topics unrelated to career/skills/learning, politely redirect the
         
     except Exception as e:
         print(f'[ERROR] Chat error: {e}')
-        return jsonify({'error': 'Failed to generate response. Please try again.'}), 500
+        return jsonify({
+            'response': _local_chat_fallback(user_message, session.get('user_name', 'User')),
+            'success': True,
+            'fallback': True
+        }), 200
 
 
 @app.route('/api/user', methods=['GET'])
