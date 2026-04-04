@@ -1181,7 +1181,9 @@ async function startDiagnosticTest() {
   setButtonLoading(btn, true, 'Loading Test...');
 
   try {
-    const res = await fetch(`/api/diagnostic-test/${encodeURIComponent(skill)}`);
+    const res = await fetch(`/api/diagnostic-test/${encodeURIComponent(skill)}`, {
+      credentials: 'include'
+    });
     const data = await res.json();
 
     if (!res.ok) throw new Error(data.error || 'Failed to load diagnostic');
@@ -2059,6 +2061,18 @@ function navToScreen(screenId) {
         displaySkillAnalysis(currentAnalysis);
       } else {
         loadLastSkillAnalysis();
+      }
+      break;
+    case 'screen-diagnostic':
+      // If no questions loaded, auto-start with first missing skill or default
+      if (!diagnosticQuestions || diagnosticQuestions.length === 0) {
+        const missingSkills = currentAnalysis?.skills_missing || [];
+        if (missingSkills.length > 0) {
+          startDiagnosticForSkill(missingSkills[0]);
+        } else {
+          // Default to Python if no analysis
+          startDiagnosticForSkill('Python');
+        }
       }
       break;
   }
