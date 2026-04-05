@@ -352,10 +352,10 @@ def register():
     
     conn = get_db()
     if not conn:
-        return jsonify({'error': 'Database connection failed'}), 500
-    
+        return jsonify({'error': 'Server is starting up, please try again in a few seconds.'}), 503
+
     cursor = conn.cursor()
-    
+
     try:
         # Check if user exists
         cursor.execute('SELECT id FROM users WHERE email=%s', (data['email'],))
@@ -403,10 +403,10 @@ def login():
     
     conn = get_db()
     if not conn:
-        return jsonify({'error': 'Database connection failed'}), 500
-    
+        return jsonify({'error': 'Server is starting up, please try again in a few seconds.'}), 503
+
     cursor = conn.cursor()
-    
+
     try:
         cursor.execute('SELECT id, name, email, password, role FROM users WHERE email=%s', (data['email'],))
         user = cursor.fetchone()
@@ -1628,21 +1628,23 @@ print(' Starting...')
 print('='*70)
 
 def _startup():
-    print('[NexaAI] Running database init in background...')
-    # Retry up to 5 times with 3-second gaps so Railway MySQL has time to start
-    for attempt in range(1, 6):
+    import time
+    print(f'[NexaAI] DB init starting — host={MYSQL_CONFIG["host"]} db={MYSQL_CONFIG["database"]} user={MYSQL_CONFIG["user"]}')
+    # Retry up to 8 times with 5-second gaps so Railway MySQL has time to start
+    for attempt in range(1, 9):
         try:
             conn = get_db()
             if conn:
                 conn.close()
                 init_db()
-                print('[NexaAI] Database init complete.')
+                print('[NexaAI] Database ready — all tables and admin user created.')
                 return
-            print(f'[NexaAI] DB not ready (attempt {attempt}/5), retrying in 3s...')
+            print(f'[NexaAI] DB not ready (attempt {attempt}/8), retrying in 5s...')
         except Exception as e:
             print(f'[NexaAI] DB init error attempt {attempt}: {e}')
-        import time; time.sleep(3)
-    print('[NexaAI] WARNING: Could not initialise DB after 5 attempts.')
+        time.sleep(5)
+    print(f'[NexaAI] ERROR: Could not connect to MySQL at {MYSQL_CONFIG["host"]} after 8 attempts.')
+    print('[NexaAI] On Railway: add variable MYSQL_URL = ${{MySQL.MYSQL_URL}} to this service.')
 
 threading.Thread(target=_startup, daemon=True).start()
 
