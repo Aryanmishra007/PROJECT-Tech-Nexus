@@ -87,12 +87,18 @@ _on_railway_early = bool(
 # Railway MySQL plugin internal hostname (services in same project)
 _railway_mysql_host = 'mysql.railway.internal' if _on_railway_early else 'localhost'
 
+_raw_host = (_url_cfg.get('host')
+             or os.environ.get('MYSQL_HOST')
+             or os.environ.get('MYSQLHOST')
+             or os.environ.get('DB_HOST')
+             or _railway_mysql_host)
+# If on Railway and host is still localhost, force Railway's internal hostname
+_effective_host = (_railway_mysql_host
+                   if (_on_railway_early and _raw_host in ('localhost', '127.0.0.1'))
+                   else _raw_host)
+
 MYSQL_CONFIG = {
-    'host':     (_url_cfg.get('host')
-                 or os.environ.get('MYSQL_HOST')
-                 or os.environ.get('MYSQLHOST')
-                 or os.environ.get('DB_HOST')
-                 or _railway_mysql_host),
+    'host':     _effective_host,
     'port':     int(_url_cfg.get('port')
                     or os.environ.get('MYSQL_PORT')
                     or os.environ.get('MYSQLPORT')
