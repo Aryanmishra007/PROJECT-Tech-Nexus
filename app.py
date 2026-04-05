@@ -52,30 +52,41 @@ from utils.ai_service      import (
 # ═══════════════════════════════════════════════════════════════════════
 import mysql.connector
 from mysql.connector import Error as DbError
+from urllib.parse import urlparse
 
-_MYSQL_HOST = (
-    os.environ.get('MYSQL_HOST') or      # Local / .env format
-    os.environ.get('MYSQLHOST') or       # Railway MySQL plugin format
-    os.environ.get('DB_HOST')
-)
+def _parse_mysql_url(url):
+    """Parse mysql://user:pass@host:port/dbname into a config dict."""
+    try:
+        p = urlparse(url)
+        return {
+            'host':     p.hostname or 'localhost',
+            'port':     p.port or 3306,
+            'user':     p.username or 'root',
+            'password': p.password or '',
+            'database': (p.path or '/nexaai').lstrip('/'),
+        }
+    except Exception:
+        return {}
 
-if not _MYSQL_HOST:
-    raise RuntimeError(
-        'MySQL is required. Set MYSQL_HOST (or MYSQLHOST) environment variable. '
-        'On Railway: add a MySQL service and it will be injected automatically.'
-    )
+# Support MYSQL_URL / DATABASE_URL (Railway single-variable format)
+# e.g.  MYSQL_URL=mysql://user:pass@host:3306/railway
+_db_url = os.environ.get('MYSQL_URL') or os.environ.get('DATABASE_URL') or ''
+if _db_url.startswith('mysql'):
+    _url_cfg = _parse_mysql_url(_db_url)
+else:
+    _url_cfg = {}
 
 MYSQL_CONFIG = {
-    'host':           _MYSQL_HOST,
-    'port':           int(os.environ.get('MYSQL_PORT', os.environ.get('MYSQLPORT', os.environ.get('DB_PORT', 3306)))),
-    'user':           os.environ.get('MYSQL_USER', os.environ.get('MYSQLUSER', os.environ.get('DB_USER', 'root'))),
-    'password':       os.environ.get('MYSQL_PASSWORD', os.environ.get('MYSQLPASSWORD', os.environ.get('DB_PASSWORD', ''))),
-    'database':       os.environ.get('MYSQL_DATABASE', os.environ.get('MYSQLDATABASE', os.environ.get('DB_NAME', 'nexaai'))),
+    'host':           _url_cfg.get('host')     or os.environ.get('MYSQL_HOST') or os.environ.get('MYSQLHOST') or os.environ.get('DB_HOST', 'localhost'),
+    'port':           int(_url_cfg.get('port') or os.environ.get('MYSQL_PORT') or os.environ.get('MYSQLPORT') or os.environ.get('DB_PORT', 3306)),
+    'user':           _url_cfg.get('user')     or os.environ.get('MYSQL_USER') or os.environ.get('MYSQLUSER') or os.environ.get('DB_USER', 'root'),
+    'password':       _url_cfg.get('password') or os.environ.get('MYSQL_PASSWORD') or os.environ.get('MYSQLPASSWORD') or os.environ.get('DB_PASSWORD', ''),
+    'database':       _url_cfg.get('database') or os.environ.get('MYSQL_DATABASE') or os.environ.get('MYSQLDATABASE') or os.environ.get('DB_NAME', 'nexaai'),
     'autocommit':     False,
     'charset':        'utf8mb4',
     'connect_timeout': 5,
 }
-print(f'[NexaAI] Database mode: MySQL ({_MYSQL_HOST}:{MYSQL_CONFIG["port"]}/{MYSQL_CONFIG["database"]})')
+print(f'[NexaAI] MySQL target: {MYSQL_CONFIG["host"]}:{MYSQL_CONFIG["port"]}/{MYSQL_CONFIG["database"]} (user={MYSQL_CONFIG["user"]})')
 
 # ═══════════════════════════════════════════════════════════════════════
 # App Setup
@@ -429,6 +440,38 @@ def login():
         conn.close()
 
 
+@app.route('/api/db-status', methods=['GET'])
+def db_status():
+    """Diagnostic: show DB config and connection status (no passwords)."""
+    status = {
+        'host':     MYSQL_CONFIG['host'],
+        'port':     MYSQL_CONFIG['port'],
+        'user':     MYSQL_CONFIG['user'],
+        'database': MYSQL_CONFIG['database'],
+        'connected': False,
+        'tables': [],
+        'user_count': 0,
+        'error': None,
+    }
+    try:
+        conn = get_db()
+        if not conn:
+            status['error'] = 'get_db() returned None'
+            return jsonify(status), 500
+        cur = conn.cursor()
+        cur.execute('SHOW TABLES')
+        status['tables'] = [r[0] for r in cur.fetchall()]
+        cur.execute('SELECT COUNT(*) FROM users') if 'users' in status['tables'] else None
+        row = cur.fetchone() if 'users' in status['tables'] else None
+        status['user_count'] = row[0] if row else 0
+        status['connected'] = True
+        cur.close()
+        conn.close()
+    except Exception as e:
+        status['error'] = str(e)
+    return jsonify(status), 200 if status['connected'] else 500
+
+
 @app.route('/api/test-db', methods=['GET'])
 def test_db():
     """Test database connection and show users"""
@@ -436,13 +479,13 @@ def test_db():
         conn = get_db()
         if not conn:
             return jsonify({'error': 'Database connection failed'}), 500
-        
+
         cursor = conn.cursor()
         cursor.execute('SELECT id, email, role FROM users')
         users = cursor.fetchall()
         cursor.close()
         conn.close()
-        
+
         return jsonify({
             'message': 'Database connected',
             'users': users,
