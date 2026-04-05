@@ -73,7 +73,7 @@ MYSQL_CONFIG = {
     'database':       os.environ.get('MYSQL_DATABASE', os.environ.get('MYSQLDATABASE', os.environ.get('DB_NAME', 'nexaai'))),
     'autocommit':     False,
     'charset':        'utf8mb4',
-    'connect_timeout': 10,
+    'connect_timeout': 5,
 }
 print(f'[NexaAI] Database mode: MySQL ({_MYSQL_HOST}:{MYSQL_CONFIG["port"]}/{MYSQL_CONFIG["database"]})')
 
@@ -692,20 +692,7 @@ def upload_resume():
 
 @app.route('/api/ping', methods=['GET'])
 def ping():
-    db_ok = False
-    try:
-        conn = get_db()
-        if conn:
-            conn.close()
-            db_ok = True
-    except Exception:
-        pass
-    return jsonify({
-        'ok': True,
-        'db': 'mysql',
-        'db_ok': db_ok,
-        'railway': _on_railway,
-    }), 200
+    return jsonify({'ok': True}), 200
 
 
 # ═══════════════════════════════════════════════════════════════════════
