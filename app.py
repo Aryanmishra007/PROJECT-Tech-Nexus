@@ -5,7 +5,6 @@ Flask Backend — MySQL with SQLite fallback
 
 import os
 import json
-import sqlite3
 import tempfile
 import random
 import string
@@ -49,45 +48,34 @@ from utils.ai_service      import (
 )
 
 # ═══════════════════════════════════════════════════════════════════════
-# Database Mode — MySQL if configured AND reachable, else SQLite
+# Database Mode — MySQL only
 # ═══════════════════════════════════════════════════════════════════════
+import mysql.connector
+from mysql.connector import Error as DbError
+
 _MYSQL_HOST = (
-    os.environ.get('MYSQL_HOST') or      # Your .env format
+    os.environ.get('MYSQL_HOST') or      # Local / .env format
     os.environ.get('MYSQLHOST') or       # Railway MySQL plugin format
     os.environ.get('DB_HOST')
 )
 
-USE_MYSQL = False
-MYSQL_CONFIG = {}
+if not _MYSQL_HOST:
+    raise RuntimeError(
+        'MySQL is required. Set MYSQL_HOST (or MYSQLHOST) environment variable. '
+        'On Railway: add a MySQL service and it will be injected automatically.'
+    )
 
-if _MYSQL_HOST:
-    try:
-        import mysql.connector
-        from mysql.connector import Error as DbError
-        MYSQL_CONFIG = {
-            'host':     _MYSQL_HOST,
-            'port':     int(os.environ.get('MYSQL_PORT', os.environ.get('MYSQLPORT', os.environ.get('DB_PORT', 3306)))),
-            'user':     os.environ.get('MYSQL_USER', os.environ.get('MYSQLUSER', os.environ.get('DB_USER', 'root'))),
-            'password': os.environ.get('MYSQL_PASSWORD', os.environ.get('MYSQLPASSWORD', os.environ.get('DB_PASSWORD', ''))),
-            'database': os.environ.get('MYSQL_DATABASE', os.environ.get('MYSQLDATABASE', os.environ.get('DB_NAME', 'resumeai'))),
-            'autocommit': False,
-            'charset': 'utf8mb4',
-            'connect_timeout': 5,
-        }
-        # Test connection before committing to MySQL mode
-        _test = mysql.connector.connect(**MYSQL_CONFIG)
-        _test.close()
-        USE_MYSQL = True
-        print(f'[NexaAI] Database mode: MySQL ({_MYSQL_HOST}:{MYSQL_CONFIG["port"]}/{MYSQL_CONFIG["database"]})')
-    except Exception as _e:
-        USE_MYSQL = False
-        print(f'[NexaAI] MySQL not reachable ({_MYSQL_HOST}): {_e}')
-        print('[NexaAI] Falling back to SQLite')
-
-if not USE_MYSQL:
-    _default_db = os.path.join(os.path.dirname(__file__), 'nexaai.db')
-    SQLITE_PATH = os.environ.get('SQLITE_PATH', _default_db)
-    print(f'[NexaAI] Database mode: SQLite ({SQLITE_PATH})')
+MYSQL_CONFIG = {
+    'host':           _MYSQL_HOST,
+    'port':           int(os.environ.get('MYSQL_PORT', os.environ.get('MYSQLPORT', os.environ.get('DB_PORT', 3306)))),
+    'user':           os.environ.get('MYSQL_USER', os.environ.get('MYSQLUSER', os.environ.get('DB_USER', 'root'))),
+    'password':       os.environ.get('MYSQL_PASSWORD', os.environ.get('MYSQLPASSWORD', os.environ.get('DB_PASSWORD', ''))),
+    'database':       os.environ.get('MYSQL_DATABASE', os.environ.get('MYSQLDATABASE', os.environ.get('DB_NAME', 'nexaai'))),
+    'autocommit':     False,
+    'charset':        'utf8mb4',
+    'connect_timeout': 10,
+}
+print(f'[NexaAI] Database mode: MySQL ({_MYSQL_HOST}:{MYSQL_CONFIG["port"]}/{MYSQL_CONFIG["database"]})')
 
 # ═══════════════════════════════════════════════════════════════════════
 # App Setup
@@ -172,49 +160,18 @@ class _Cur:
 
 
 def get_db():
-    """Return a unified DB connection (MySQL or SQLite)."""
-    if USE_MYSQL:
-        try:
-            conn = mysql.connector.connect(**MYSQL_CONFIG)
-            return _Conn(conn, is_sqlite=False)
-        except Exception as e:
-            print(f'[ERROR] MySQL failed: {e}')
-            return None
-    else:
-        try:
-            conn = sqlite3.connect(SQLITE_PATH, check_same_thread=False)
-            return _Conn(conn, is_sqlite=True)
-        except Exception as e:
-            print(f'[ERROR] SQLite failed: {e}')
-            return None
+    """Return a MySQL connection."""
+    try:
+        conn = mysql.connector.connect(**MYSQL_CONFIG)
+        return _Conn(conn, is_sqlite=False)
+    except Exception as e:
+        print(f'[ERROR] MySQL connection failed: {e}')
+        return None
 
 
 def _sql(mysql_sql):
-    """Return SQLite-compatible SQL from MySQL SQL."""
-    if USE_MYSQL:
-        return mysql_sql
-    sql = mysql_sql
-    sql = sql.replace('INT AUTO_INCREMENT PRIMARY KEY', 'INTEGER PRIMARY KEY AUTOINCREMENT')
-    sql = sql.replace("ENUM('student','admin') DEFAULT 'student'", "TEXT DEFAULT 'student'")
-    sql = sql.replace('JSON', 'TEXT')
-    sql = sql.replace('DECIMAL(10,2)', 'REAL')
-    sql = sql.replace('FLOAT', 'REAL')
-    sql = sql.replace('VARCHAR(255)', 'TEXT')
-    sql = sql.replace('VARCHAR(50)', 'TEXT')
-    sql = sql.replace('TIMESTAMP DEFAULT CURRENT_TIMESTAMP', 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP')
-    sql = sql.replace('TIMESTAMP NULL', 'TIMESTAMP')
-    # Remove FOREIGN KEY lines for SQLite
-    lines = [l for l in sql.split('\n') if 'FOREIGN KEY' not in l and 'REFERENCES' not in l]
-    # Remove trailing commas before closing paren
-    cleaned = []
-    for i, line in enumerate(lines):
-        stripped = line.rstrip()
-        if stripped.endswith(','):
-            rest = '\n'.join(lines[i+1:]).lstrip()
-            if rest.startswith(')'):
-                stripped = stripped[:-1]
-        cleaned.append(stripped)
-    return '\n'.join(cleaned)
+    """Return MySQL SQL as-is (MySQL-only mode)."""
+    return mysql_sql
 
 
 def init_db():
@@ -325,7 +282,7 @@ def init_db():
 
         cursor.close()
         conn.close()
-        db_type = 'MySQL' if USE_MYSQL else 'SQLite'
+        db_type = 'MySQL'
         print(f'[NexaAI] {db_type} database ready')
 
     except Exception as e:
@@ -519,10 +476,7 @@ def forgot_password():
         cursor = conn.cursor()
         
         # Check if user exists
-        if USE_MYSQL:
-            cursor.execute('SELECT id, name FROM users WHERE email = %s', (email,))
-        else:
-            cursor.execute('SELECT id, name FROM users WHERE email = ?', (email,))
+        cursor.execute('SELECT id, name FROM users WHERE email = %s', (email,))
         
         user = cursor.fetchone()
         cursor.close()
@@ -590,16 +544,10 @@ def reset_password():
         # Update password
         hashed_password = generate_password_hash(new_password)
         
-        if USE_MYSQL:
-            cursor.execute(
-                'UPDATE users SET password = %s WHERE id = %s',
-                (hashed_password, stored['user_id'])
-            )
-        else:
-            cursor.execute(
-                'UPDATE users SET password = ? WHERE id = ?',
-                (hashed_password, stored['user_id'])
-            )
+        cursor.execute(
+            'UPDATE users SET password = %s WHERE id = %s',
+            (hashed_password, stored['user_id'])
+        )
         
         conn.commit()
         cursor.close()
@@ -754,7 +702,7 @@ def ping():
         pass
     return jsonify({
         'ok': True,
-        'db': 'mysql' if USE_MYSQL else 'sqlite',
+        'db': 'mysql',
         'db_ok': db_ok,
         'railway': _on_railway,
     }), 200
