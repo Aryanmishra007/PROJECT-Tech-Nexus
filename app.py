@@ -49,30 +49,42 @@ from utils.ai_service      import (
 )
 
 # ═══════════════════════════════════════════════════════════════════════
-# Database Mode — MySQL if configured, else SQLite
+# Database Mode — MySQL if configured AND reachable, else SQLite
 # ═══════════════════════════════════════════════════════════════════════
-# Check multiple possible env var names for MySQL host
 _MYSQL_HOST = (
     os.environ.get('MYSQL_HOST') or      # Your .env format
-    os.environ.get('MYSQLHOST') or       # Railway format
+    os.environ.get('MYSQLHOST') or       # Railway MySQL plugin format
     os.environ.get('DB_HOST')
 )
-USE_MYSQL = bool(_MYSQL_HOST)
 
-if USE_MYSQL:
-    import mysql.connector
-    from mysql.connector import Error as DbError
-    MYSQL_CONFIG = {
-        'host':     _MYSQL_HOST,
-        'port':     int(os.environ.get('MYSQL_PORT', os.environ.get('MYSQLPORT', os.environ.get('DB_PORT', 3306)))),
-        'user':     os.environ.get('MYSQL_USER', os.environ.get('MYSQLUSER', os.environ.get('DB_USER', 'root'))),
-        'password': os.environ.get('MYSQL_PASSWORD', os.environ.get('MYSQLPASSWORD', os.environ.get('DB_PASSWORD', ''))),
-        'database': os.environ.get('MYSQL_DATABASE', os.environ.get('MYSQLDATABASE', os.environ.get('DB_NAME', 'resumeai'))),
-        'autocommit': False,
-        'charset': 'utf8mb4'
-    }
-    print(f'[NexaAI] Database mode: MySQL ({_MYSQL_HOST}:{MYSQL_CONFIG["port"]}/{MYSQL_CONFIG["database"]})')
-else:
+USE_MYSQL = False
+MYSQL_CONFIG = {}
+
+if _MYSQL_HOST:
+    try:
+        import mysql.connector
+        from mysql.connector import Error as DbError
+        MYSQL_CONFIG = {
+            'host':     _MYSQL_HOST,
+            'port':     int(os.environ.get('MYSQL_PORT', os.environ.get('MYSQLPORT', os.environ.get('DB_PORT', 3306)))),
+            'user':     os.environ.get('MYSQL_USER', os.environ.get('MYSQLUSER', os.environ.get('DB_USER', 'root'))),
+            'password': os.environ.get('MYSQL_PASSWORD', os.environ.get('MYSQLPASSWORD', os.environ.get('DB_PASSWORD', ''))),
+            'database': os.environ.get('MYSQL_DATABASE', os.environ.get('MYSQLDATABASE', os.environ.get('DB_NAME', 'resumeai'))),
+            'autocommit': False,
+            'charset': 'utf8mb4',
+            'connect_timeout': 5,
+        }
+        # Test connection before committing to MySQL mode
+        _test = mysql.connector.connect(**MYSQL_CONFIG)
+        _test.close()
+        USE_MYSQL = True
+        print(f'[NexaAI] Database mode: MySQL ({_MYSQL_HOST}:{MYSQL_CONFIG["port"]}/{MYSQL_CONFIG["database"]})')
+    except Exception as _e:
+        USE_MYSQL = False
+        print(f'[NexaAI] MySQL not reachable ({_MYSQL_HOST}): {_e}')
+        print('[NexaAI] Falling back to SQLite')
+
+if not USE_MYSQL:
     _default_db = os.path.join(os.path.dirname(__file__), 'nexaai.db')
     SQLITE_PATH = os.environ.get('SQLITE_PATH', _default_db)
     print(f'[NexaAI] Database mode: SQLite ({SQLITE_PATH})')
@@ -83,7 +95,8 @@ else:
 
 app = Flask(__name__, static_folder='.', static_url_path='')
 app.secret_key = os.environ.get('SECRET_KEY', 'nexaai-dev-secret-2024')
-CORS(app, supports_credentials=True, origins='*')
+# Reflect the request origin so credentials (cookies) work on all browsers/mobile
+CORS(app, supports_credentials=True, origins=lambda origin: origin or '*')
 
 # On Railway (HTTPS) cookies need Secure+SameSite=None
 # Locally (HTTP) use Lax so sessions still work
@@ -731,7 +744,20 @@ def upload_resume():
 
 @app.route('/api/ping', methods=['GET'])
 def ping():
-    return jsonify({'ok': True, 'version': 'hotfix-upload-1'}), 200
+    db_ok = False
+    try:
+        conn = get_db()
+        if conn:
+            conn.close()
+            db_ok = True
+    except Exception:
+        pass
+    return jsonify({
+        'ok': True,
+        'db': 'mysql' if USE_MYSQL else 'sqlite',
+        'db_ok': db_ok,
+        'railway': _on_railway,
+    }), 200
 
 
 # ═══════════════════════════════════════════════════════════════════════
