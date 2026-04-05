@@ -94,8 +94,7 @@ print(f'[NexaAI] MySQL target: {MYSQL_CONFIG["host"]}:{MYSQL_CONFIG["port"]}/{MY
 # ═══════════════════════════════════════════════════════════════════════
 
 app = Flask(__name__, static_folder='.', static_url_path='')
-# Fix HTTPS detection behind Railway's reverse proxy (required for secure cookies)
-app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 app.secret_key = os.environ.get('SECRET_KEY', 'nexaai-dev-secret-2024')
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
 CORS(app, supports_credentials=True, origins='*')
