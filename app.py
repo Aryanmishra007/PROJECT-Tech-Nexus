@@ -98,8 +98,7 @@ app = Flask(__name__, static_folder='.', static_url_path='')
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 app.secret_key = os.environ.get('SECRET_KEY', 'nexaai-dev-secret-2024')
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
-# Reflect the request origin so credentials (cookies) work on all browsers/mobile
-CORS(app, supports_credentials=True, origins=lambda origin: origin or '*')
+CORS(app, supports_credentials=True, origins='*')
 
 # On Railway (HTTPS) cookies need Secure+SameSite=None
 # Locally (HTTP) use Lax so sessions still work
