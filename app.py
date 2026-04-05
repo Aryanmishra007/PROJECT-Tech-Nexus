@@ -764,7 +764,7 @@ def upload_resume():
 
 @app.route('/api/ping', methods=['GET'])
 def ping():
-    return jsonify({'ok': True}), 200
+    return jsonify({'ok': True, 'v': 3}), 200
 
 
 # ═══════════════════════════════════════════════════════════════════════
