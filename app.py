@@ -77,15 +77,42 @@ if _db_url.startswith('mysql'):
 else:
     _url_cfg = {}
 
+# Detect if running on Railway (it auto-injects these)
+_on_railway_early = bool(
+    os.environ.get('RAILWAY_ENVIRONMENT') or
+    os.environ.get('RAILWAY_SERVICE_ID') or
+    os.environ.get('RAILWAY_PROJECT_ID')
+)
+
+# Railway MySQL plugin internal hostname (services in same project)
+_railway_mysql_host = 'mysql.railway.internal' if _on_railway_early else 'localhost'
+
 MYSQL_CONFIG = {
-    'host':           _url_cfg.get('host')     or os.environ.get('MYSQL_HOST') or os.environ.get('MYSQLHOST') or os.environ.get('DB_HOST', 'localhost'),
-    'port':           int(_url_cfg.get('port') or os.environ.get('MYSQL_PORT') or os.environ.get('MYSQLPORT') or os.environ.get('DB_PORT', 3306)),
-    'user':           _url_cfg.get('user')     or os.environ.get('MYSQL_USER') or os.environ.get('MYSQLUSER') or os.environ.get('DB_USER', 'root'),
-    'password':       _url_cfg.get('password') or os.environ.get('MYSQL_PASSWORD') or os.environ.get('MYSQLPASSWORD') or os.environ.get('DB_PASSWORD', ''),
-    'database':       _url_cfg.get('database') or os.environ.get('MYSQL_DATABASE') or os.environ.get('MYSQLDATABASE') or os.environ.get('DB_NAME', 'nexaai'),
-    'autocommit':     False,
-    'charset':        'utf8mb4',
-    'connect_timeout': 3,
+    'host':     (_url_cfg.get('host')
+                 or os.environ.get('MYSQL_HOST')
+                 or os.environ.get('MYSQLHOST')
+                 or os.environ.get('DB_HOST')
+                 or _railway_mysql_host),
+    'port':     int(_url_cfg.get('port')
+                    or os.environ.get('MYSQL_PORT')
+                    or os.environ.get('MYSQLPORT')
+                    or os.environ.get('DB_PORT', 3306)),
+    'user':     (_url_cfg.get('user')
+                 or os.environ.get('MYSQL_USER')
+                 or os.environ.get('MYSQLUSER')
+                 or os.environ.get('DB_USER', 'root')),
+    'password': (_url_cfg.get('password')
+                 or os.environ.get('MYSQL_PASSWORD')
+                 or os.environ.get('MYSQLPASSWORD')
+                 or os.environ.get('MYSQL_ROOT_PASSWORD')
+                 or os.environ.get('DB_PASSWORD', '')),
+    'database': (_url_cfg.get('database')
+                 or os.environ.get('MYSQL_DATABASE')
+                 or os.environ.get('MYSQLDATABASE')
+                 or os.environ.get('DB_NAME', 'railway')),
+    'autocommit':      False,
+    'charset':         'utf8mb4',
+    'connect_timeout': 5,
 }
 print(f'[NexaAI] MySQL target: {MYSQL_CONFIG["host"]}:{MYSQL_CONFIG["port"]}/{MYSQL_CONFIG["database"]} (user={MYSQL_CONFIG["user"]})')
 
