@@ -85,7 +85,7 @@ MYSQL_CONFIG = {
     'database':       _url_cfg.get('database') or os.environ.get('MYSQL_DATABASE') or os.environ.get('MYSQLDATABASE') or os.environ.get('DB_NAME', 'nexaai'),
     'autocommit':     False,
     'charset':        'utf8mb4',
-    'connect_timeout': 5,
+    'connect_timeout': 3,
 }
 print(f'[NexaAI] MySQL target: {MYSQL_CONFIG["host"]}:{MYSQL_CONFIG["port"]}/{MYSQL_CONFIG["database"]} (user={MYSQL_CONFIG["user"]})')
 
@@ -1616,14 +1616,35 @@ def server_error(error):
 
 
 # ═══════════════════════════════════════════════════════════════════════
-# Startup — runs for BOTH gunicorn and direct python app.py
+# Startup — run init_db in background so gunicorn starts immediately
+# (avoids healthcheck failure when MySQL is slow to accept connections)
 # ═══════════════════════════════════════════════════════════════════════
+
+import threading
 
 print('\n' + '='*70)
 print(' NexaAI — AI-Driven Skill Gap Platform')
-print(' Initializing...')
+print(' Starting...')
 print('='*70)
-init_db()
+
+def _startup():
+    print('[NexaAI] Running database init in background...')
+    # Retry up to 5 times with 3-second gaps so Railway MySQL has time to start
+    for attempt in range(1, 6):
+        try:
+            conn = get_db()
+            if conn:
+                conn.close()
+                init_db()
+                print('[NexaAI] Database init complete.')
+                return
+            print(f'[NexaAI] DB not ready (attempt {attempt}/5), retrying in 3s...')
+        except Exception as e:
+            print(f'[NexaAI] DB init error attempt {attempt}: {e}')
+        import time; time.sleep(3)
+    print('[NexaAI] WARNING: Could not initialise DB after 5 attempts.')
+
+threading.Thread(target=_startup, daemon=True).start()
 
 
 # ═══════════════════════════════════════════════════════════════════════
