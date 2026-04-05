@@ -23,6 +23,7 @@ from flask import Flask, request, jsonify, session, send_from_directory
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 # ── Google Gemini AI ───────────────────────────────────────────────────
 try:
@@ -93,7 +94,10 @@ print(f'[NexaAI] MySQL target: {MYSQL_CONFIG["host"]}:{MYSQL_CONFIG["port"]}/{MY
 # ═══════════════════════════════════════════════════════════════════════
 
 app = Flask(__name__, static_folder='.', static_url_path='')
+# Fix HTTPS detection behind Railway's reverse proxy (required for secure cookies)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 app.secret_key = os.environ.get('SECRET_KEY', 'nexaai-dev-secret-2024')
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
 # Reflect the request origin so credentials (cookies) work on all browsers/mobile
 CORS(app, supports_credentials=True, origins=lambda origin: origin or '*')
 
@@ -381,7 +385,7 @@ def register():
             }
         }), 201
     
-    except Error as e:
+    except Exception as e:
         return jsonify({'error': str(e)}), 500
     
     finally:
@@ -491,7 +495,7 @@ def test_db():
             'users': users,
             'user_count': len(users) if users else 0
         }), 200
-    except Error as e:
+    except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 
