@@ -1650,6 +1650,10 @@ def serve_upload(filename):
 
 @app.errorhandler(404)
 def not_found(error):
+    # Don't serve index.html for static asset requests — return a real 404
+    path = request.path
+    if any(path.endswith(ext) for ext in ('.js', '.css', '.png', '.jpg', '.ico', '.svg', '.woff', '.woff2', '.ttf', '.map')):
+        return jsonify({'error': 'Not found'}), 404
     return send_from_directory('.', 'index.html')
 
 
