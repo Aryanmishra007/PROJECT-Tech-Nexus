@@ -5,6 +5,7 @@ Extracts text and skills from PDF/DOCX resumes.
 
 import re
 import io
+from collections import Counter
 
 # Try importing PDF and DOCX libraries
 try:
@@ -79,6 +80,119 @@ SKILL_KEYWORDS = {
     'slack', 'figma', 'postman', 'vscode', 'intellij', 'vim',
     'linux', 'windows server', 'macos',
 }
+
+# Common normalization aliases for NLP matching
+SKILL_ALIASES = {
+    'js': 'javascript',
+    'ts': 'typescript',
+    'py': 'python',
+    'node': 'node.js',
+    'nodejs': 'node.js',
+    'postgres': 'postgresql',
+    'g suite': 'google workspace',
+    'k8s': 'kubernetes',
+    'ci cd': 'ci/cd',
+    'ml': 'machine learning',
+    'dl': 'deep learning',
+    'nlp': 'natural language processing',
+    'cv': 'computer vision',
+    'genai': 'generative ai',
+}
+
+# Optional spaCy support; parser works without it.
+try:
+    import spacy
+    _NLP = spacy.blank('en')
+    if 'sentencizer' not in _NLP.pipe_names:
+        _NLP.add_pipe('sentencizer')
+    HAS_SPACY = True
+except Exception:
+    _NLP = None
+    HAS_SPACY = False
+
+
+def _normalize_text_for_nlp(text):
+    """Normalize text for robust NLP pattern matching."""
+    text = text.lower()
+    text = text.replace('\n', ' ')
+    text = re.sub(r'[^a-z0-9+.#/\-\s]', ' ', text)
+    text = re.sub(r'\s+', ' ', text).strip()
+    return text
+
+
+def _normalize_skill(skill):
+    """Normalize individual skill string and map aliases."""
+    s = re.sub(r'\s+', ' ', skill.lower().strip())
+    return SKILL_ALIASES.get(s, s)
+
+
+def _tokenize_text(text):
+    """Tokenize text into simple word tokens."""
+    return re.findall(r'[a-z0-9][a-z0-9+.#/\-]*', text.lower())
+
+
+def _extract_candidate_phrases(text):
+    """Build 1-3 gram phrase candidates for skill matching."""
+    tokens = _tokenize_text(text)
+    candidates = []
+    for i in range(len(tokens)):
+        candidates.append(tokens[i])
+        if i + 1 < len(tokens):
+            candidates.append(tokens[i] + ' ' + tokens[i + 1])
+        if i + 2 < len(tokens):
+            candidates.append(tokens[i] + ' ' + tokens[i + 1] + ' ' + tokens[i + 2])
+    return candidates
+
+
+def _extract_skills_spacy(text):
+    """Extract skills using spaCy tokenization/sentence boundaries if available."""
+    if not HAS_SPACY or not text:
+        return []
+    doc = _NLP(text)
+    candidates = []
+    for sent in doc.sents:
+        sent_text = _normalize_text_for_nlp(sent.text)
+        if sent_text:
+            candidates.extend(_extract_candidate_phrases(sent_text))
+
+    normalized_candidates = {_normalize_skill(c) for c in candidates}
+    found = []
+    for skill in sorted(SKILL_KEYWORDS, key=len, reverse=True):
+        nskill = _normalize_skill(skill)
+        if nskill in normalized_candidates:
+            found.append(nskill)
+    return found
+
+
+def _extract_skills_ngram(text):
+    """Extract skills using n-gram candidate matching without external NLP dependencies."""
+    clean_text = _normalize_text_for_nlp(text)
+    candidates = _extract_candidate_phrases(clean_text)
+    candidate_set = {_normalize_skill(c) for c in candidates}
+
+    found = []
+    for skill in sorted(SKILL_KEYWORDS, key=len, reverse=True):
+        nskill = _normalize_skill(skill)
+        if ' ' in nskill:
+            if nskill in clean_text or nskill in candidate_set:
+                found.append(nskill)
+        else:
+            if nskill in candidate_set:
+                found.append(nskill)
+    return found
+
+
+def _rank_skills_by_frequency(text, skills):
+    """Rank found skills by frequency to prioritize stronger evidence."""
+    if not skills:
+        return []
+    clean_text = _normalize_text_for_nlp(text)
+    counts = Counter()
+    for skill in skills:
+        pattern = r'\b' + re.escape(skill) + r'\b'
+        matches = re.findall(pattern, clean_text)
+        counts[skill] = len(matches)
+    return sorted(skills, key=lambda s: (-counts[s], -len(s), s))
 
 
 def extract_text_from_pdf(file_obj):
@@ -166,32 +280,37 @@ def extract_name(text):
 
 
 def extract_skills_from_text(text):
-    """Extract skill keywords from resume text using pattern matching."""
+    """Extract skill keywords using a lightweight NLP pipeline with fallback."""
+    if not text:
+        return []
+
+    # Try spaCy-based extraction first when available.
+    found_skills = _extract_skills_spacy(text)
+
+    # Always combine with n-gram extraction for better recall.
+    found_skills.extend(_extract_skills_ngram(text))
+
+    # Backward-compatible strict keyword fallback.
     text_lower = text.lower()
-    found_skills = []
-
-    # Sort by length descending to match multi-word skills first
-    sorted_skills = sorted(SKILL_KEYWORDS, key=len, reverse=True)
-
-    for skill in sorted_skills:
-        # Use word boundary matching for single-word skills
-        if ' ' in skill:
-            if skill in text_lower:
-                found_skills.append(skill)
-        else:
+    for skill in sorted(SKILL_KEYWORDS, key=len, reverse=True):
+        if ' ' in skill and skill in text_lower:
+            found_skills.append(_normalize_skill(skill))
+        elif ' ' not in skill:
             pattern = r'\b' + re.escape(skill) + r'\b'
             if re.search(pattern, text_lower):
-                found_skills.append(skill)
+                found_skills.append(_normalize_skill(skill))
 
-    # Remove duplicates while preserving order
+    # De-duplicate and rank to keep the list stable and meaningful.
+    unique = []
     seen = set()
-    unique_skills = []
     for skill in found_skills:
-        if skill not in seen:
+        skill = _normalize_skill(skill)
+        if skill in SKILL_KEYWORDS and skill not in seen:
             seen.add(skill)
-            unique_skills.append(skill)
+            unique.append(skill)
 
-    return unique_skills
+    ranked = _rank_skills_by_frequency(text, unique)
+    return ranked
 
 
 def extract_experience_years(text):
