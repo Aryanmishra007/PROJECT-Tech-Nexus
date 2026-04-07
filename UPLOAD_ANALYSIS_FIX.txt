@@ -102,6 +102,6 @@ API endpoint:
 
 ═════════════════════════════════════════════════════════════════════════════
 
-Try uploading a resume now! The analysis should work.
+Try uploading a resume now! The analysis should work
 
 ═════════════════════════════════════════════════════════════════════════════
