@@ -1,16 +1,25 @@
-# 🚀 AI-Powered Skill Gap Analyzer & Personalized Learning Platform
-📌 Overview
+# AI-Powered Skill Gap Analyzer & Personalized Learning Platform
+Overview
 
-This project is an AI-driven platform that identifies skill gaps in students and provides personalized learning recommendations through an intuitive and user-friendly interface.
+This project is an AI-based platform that identifies skill gaps in students and provides personalized learning recommendations. It aims to help users understand their current skill level and improve by suggesting relevant learning paths.
 
-Unlike traditional systems, this platform combines machine learning + modern UI/UX design to deliver a highly interactive, adaptive, and engaging learning experience.
+The system combines basic machine learning techniques with a simple and user-friendly interface to make the experience smooth and practical.
 
-## 🧠 NLP Upgrade (April 2026)
+Features
+Skill gap identification based on user input or resume
+Personalized learning recommendations
+Simple and responsive user interface
+Basic AI/ML-based analysis
 
-- Added NLP-based resume skill extraction pipeline in [utils/resume_parser.py](utils/resume_parser.py).
-- Uses tokenization + n-gram phrase matching and alias normalization for better skill detection.
-- Supports optional spaCy sentence parsing when installed, with automatic fallback when unavailable.
-- Improves extraction quality for multi-word skills like Natural Language Processing, Machine Learning, and Prompt Engineering.
+NLP Update (April 2026)
+
+An NLP-based resume skill extraction feature has been added to improve accuracy in detecting skills from resumes.
+
+Implemented in utils/resume_parser.py
+Uses tokenization and n-gram matching
+Includes alias normalization for better mapping of similar skills
+Supports optional spaCy parsing (with fallback if not available)
+Improved detection of multi-word skills like Natural Language Processing and Machine Learning
 
 <Existing content for Contributing here>
 
