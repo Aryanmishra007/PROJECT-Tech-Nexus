@@ -11,7 +11,7 @@ Personalized learning recommendations
 Simple and responsive user interface
 Basic AI/ML-based analysis
 
-NLP Update (April 2026)
+NLP Update 
 
 An NLP-based resume skill extraction feature has been added to improve accuracy in detecting skills from resumes.
 
