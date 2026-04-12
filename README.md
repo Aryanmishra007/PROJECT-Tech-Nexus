@@ -8,7 +8,7 @@
 ![Contributors](https://img.shields.io/badge/Contributors-2-orange) 
 ![Team](https://img.shields.io/badge/Team-Tech%20Innovators-blue)
 
----
+--- 
 
 ## 📋 Table of Contents
 
