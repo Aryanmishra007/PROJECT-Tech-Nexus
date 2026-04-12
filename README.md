@@ -2,8 +2,7 @@
  
 **Team**: 🏆 **Tech Innovators** | **Team ID**: `26E2078`  
 
-![Project Status](https://img.shields.io/badge/Status-Active-brightgreen)  
-![Python Version](https://img.shields.io/badge/Python-3.8%2B-blue)
+![Project Status](https://img.shields.io/badge/Status-Active-brightgreen)  ![Python Version](https://img.shields.io/badge/Python-3.8%2B-blue)
 ![License](https://img.shields.io/badge/License-MIT-green) 
 ![Contributors](https://img.shields.io/badge/Contributors-2-orange) 
 ![Team](https://img.shields.io/badge/Team-Tech%20Innovators-blue)
