@@ -702,7 +702,7 @@ We appreciate the contributions of the following developers:
         <br />
         <b>Pranav Tripathi (Stranger)</b>
         <br />
-        <sub>Roll No: 2401010304</sub>
+        <sub>Roll No: 2401010129</sub>
         <br />
         <sub>NLP Module & Documentation</sub>
         <br />
@@ -716,7 +716,7 @@ We appreciate the contributions of the following developers:
 | Name | Roll No | GitHub | Role |
 |------|---------|--------|------|
 | Hridyanshu Singh | 2401010159 | [@HridyanshuSingh](https://github.com/HridyanshuSingh) | Project Lead, Backend Architecture |
-| Pranav Tripathi (Stranger) | 2401010304 | [@ssstrangerx](https://github.com/ssstrangerx) | NLP Specialist, Documentation |
+| Pranav Tripathi (Stranger) | 2401010129 | [@ssstrangerx](https://github.com/ssstrangerx) | NLP Specialist, Documentation |
 
 ### Contribution Areas
 - **Hridyanshu Singh**: 
@@ -763,7 +763,7 @@ copies of the Software...
 
 **Project Maintainers:**
 - 👤 **Hridyanshu Singh** (Roll: 2401010159) - [GitHub](https://github.com/HridyanshuSingh) 
-- 👤 **Pranav Tripathi (Stranger)** (Roll: 2401010304) - [GitHub](https://github.com/ssstrangerx) 
+- 👤 **Pranav Tripathi (Stranger)** (Roll: 2401010129) - [GitHub](https://github.com/ssstrangerx) 
 
 ### Support Resources
 
