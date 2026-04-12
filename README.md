@@ -698,9 +698,9 @@ We appreciate the contributions of the following developers:
     </td>
     <td align="center">
       <a href="https://github.com/ssstrangerx">
-        <img src="https://avatars.githubusercontent.com/u/ssstrangerx" width="100px;" alt="Mr. T"/>
+        <img src="https://avatars.githubusercontent.com/u/ssstrangerx" width="100px;" alt="Pranav Tripathi"/>
         <br />
-        <b>Mr. T (Stranger)</b>
+        <b>Pranav Tripathi (Stranger)</b>
         <br />
         <sub>Roll No: 2401010304</sub>
         <br />
@@ -716,7 +716,7 @@ We appreciate the contributions of the following developers:
 | Name | Roll No | GitHub | Role |
 |------|---------|--------|------|
 | Hridyanshu Singh | 2401010159 | [@HridyanshuSingh](https://github.com/HridyanshuSingh) | Project Lead, Backend Architecture |
-| Mr. T (Stranger) | 2401010304 | [@ssstrangerx](https://github.com/ssstrangerx) | NLP Specialist, Documentation |
+| Pranav Tripathi (Stranger) | 2401010304 | [@ssstrangerx](https://github.com/ssstrangerx) | NLP Specialist, Documentation |
 
 ### Contribution Areas
 - **Hridyanshu Singh**: 
@@ -726,7 +726,7 @@ We appreciate the contributions of the following developers:
   - Database Schema Design
   - API Endpoint Development
 
-- **Mr. T (Stranger)**:
+- **Pranav Tripathi (Stranger)**:
   - NLP Processing & Tokenization
   - spaCy Integration
   - Skill Extraction Algorithms
@@ -763,7 +763,7 @@ copies of the Software...
 
 **Project Maintainers:**
 - 👤 **Hridyanshu Singh** (Roll: 2401010159) - [GitHub](https://github.com/HridyanshuSingh) 
-- 👤 **Mr. T (Stranger)** (Roll: 2401010304) - [GitHub](https://github.com/ssstrangerx) 
+- 👤 **Pranav Tripathi (Stranger)** (Roll: 2401010304) - [GitHub](https://github.com/ssstrangerx) 
 
 ### Support Resources
 
