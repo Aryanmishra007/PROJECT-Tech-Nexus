@@ -1,6 +1,7 @@
-"""
+""" 
 View all data stored in MySQL database
 Run: python view_database.py
+Made By AI(ChatGPT, Claude, Grok)
 """
 import os
 try:
