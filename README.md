@@ -302,7 +302,7 @@ skill-gap-analyzer/
 
 ### Step 1: Clone the Repository
 ```bash
-git clone https://github.com/ssstrangerx/skill-gap-analyzer.git
+git clone https://github.com/ssSSSSStrangerXXx/skill-gap-analyzer.git
 cd skill-gap-analyzer
 ```
 
@@ -697,16 +697,16 @@ We appreciate the contributions of the following developers:
       </a>
     </td>
     <td align="center">
-      <a href="https://github.com/ssstrangerx">
-        <img src="https://avatars.githubusercontent.com/u/ssstrangerx" width="100px;" alt="Pranav Tripathi"/>
+      <a href="https://github.com/ssSSSSStrangerXXx">
+        <img src="https://avatars.githubusercontent.com/u/ssSSSSStrangerXXx" width="100px;" alt="Pranav Tripathi"/>
         <br />
-        <b>Pranav Tripathi (Stranger)</b>
+        <b>Pranav Tripathi (SSSSStrangerXX)</b>
         <br />
         <sub>Roll No: 2401010129</sub>
         <br />
         <sub>NLP Module & Documentation</sub>
         <br />
-        <a href="https://github.com/ssstrangerx">GitHub</a>
+        <a href="https://github.com/ssSSSSStrangerXXx">GitHub</a>
       </a>
     </td>
   </tr>
@@ -716,7 +716,7 @@ We appreciate the contributions of the following developers:
 | Name | Roll No | GitHub | Role |
 |------|---------|--------|------|
 | Hridyanshu Singh | 2401010159 | [@HridyanshuSingh](https://github.com/HridyanshuSingh) | Project Lead, Backend Architecture |
-| Pranav Tripathi (Stranger) | 2401010129 | [@ssstrangerx](https://github.com/ssstrangerx) | NLP Specialist, Documentation |
+| Pranav Tripathi (SSSSStrangerXX) | 2401010129 | [@ssSSSSStrangerXXx](https://github.com/ssSSSSStrangerXXx) | NLP Specialist, Documentation |
 
 ### Contribution Areas
 - **Hridyanshu Singh**: 
@@ -726,7 +726,7 @@ We appreciate the contributions of the following developers:
   - Database Schema Design
   - API Endpoint Development
 
-- **Pranav Tripathi (Stranger)**:
+- **Pranav Tripathi (SSSSStrangerXX)**:
   - NLP Processing & Tokenization
   - spaCy Integration
   - Skill Extraction Algorithms
@@ -763,13 +763,13 @@ copies of the Software...
 
 **Project Maintainers:**
 - 👤 **Hridyanshu Singh** (Roll: 2401010159) - [GitHub](https://github.com/HridyanshuSingh) 
-- 👤 **Pranav Tripathi (Stranger)** (Roll: 2401010129) - [GitHub](https://github.com/ssstrangerx) 
+- 👤 **Pranav Tripathi (SSSSStrangerXX)** (Roll: 2401010129) - [GitHub](https://github.com/ssSSSSStrangerXXx) 
 
 ### Support Resources
 
 - 📖 **Documentation**: [Read the Docs](https://skill-gap-analyzer.readthedocs.io)
-- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/ssstrangerx/skill-gap-analyzer/issues)
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/ssstrangerx/skill-gap-analyzer/discussions)
+- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/ssSSSSStrangerXXx/skill-gap-analyzer/issues)
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/ssSSSSStrangerXXx/skill-gap-analyzer/discussions)
 - 📧 **Email Support**: support@skillgapanalyzer.com
 - 💬 **Discord Community**: [Join Server](https://discord.gg/skillgap)
 
