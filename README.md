@@ -1,5 +1,5 @@
 # 🎓 AI-Powered Skill Gap Analyzer & Personalized Learning Platform
-
+ 
 **Team**: 🏆 **Tech Innovators** | **Team ID**: `26E2078`  
   
 ![Project Status](https://img.shields.io/badge/Status-Active-brightgreen)  
