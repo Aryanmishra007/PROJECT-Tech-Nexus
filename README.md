@@ -678,7 +678,7 @@ We appreciate the contributions of the following developers:
   <tr>
     <td align="center" colspan="2">
       <h3>🏆 TECH INNOVATORS - TEAM 26E2078</h3>
-      <p><strong>Semester VII Project</strong> | <strong>B.Tech CSE</strong></p>
+      <p><strong>Semester IV Project</strong> | <strong>B.Tech CSE</strong></p>
     </td>
   </tr>
   <tr>
