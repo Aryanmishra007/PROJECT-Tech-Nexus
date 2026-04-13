@@ -59,7 +59,7 @@ The system combines advanced resume parsing with AI-driven analysis to:
 | **Team ID** | 26E2078 |
 | **Institution** | K.R Mangalam University |
 | **Department** | Computer Science and Engineering |
-| **Academic Year** | 2024-2025 |
+| **Academic Year** | 2025-2026 |
 | **Project Category** | Deeptech And System Based |
 
 ### Our Vision
