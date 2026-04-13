@@ -756,7 +756,7 @@ copies of the Software...
 - **Team ID**: 26E2078
 - **Institution**: K.R Mangalam University
 - **Department**: Computer Science & Engineering
-- **Semester**: VII
+- **Semester**: IV
 
 ### Get in Touch
 
