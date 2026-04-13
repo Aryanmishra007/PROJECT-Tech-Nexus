@@ -60,7 +60,7 @@ The system combines advanced resume parsing with AI-driven analysis to:
 | **Institution** | K.R Mangalam University |
 | **Department** | Computer Science and Engineering |
 | **Academic Year** | 2024-2025 |
-| **Project Category** | University Based - AI & Innovation |
+| **Project Category** | Deeptech And System Based |
 
 ### Our Vision
 *Empowering students and professionals with intelligent career guidance tools that leverage cutting-edge AI and machine learning to bridge the academia-industry skill gap.*
